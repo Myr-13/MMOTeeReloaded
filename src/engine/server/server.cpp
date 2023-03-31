@@ -2812,7 +2812,7 @@ int CServer::Run()
 				t = time_get();
 				int x = (TickStartTime(m_CurrentGameTick + 1) - t) * 1000000 / time_freq() + 1;
 
-				PacketWaiting = x > 0 ? net_socket_read_wait(m_NetServer.Socket(), x) : true;
+				PacketWaiting = (x <= 0) || net_socket_read_wait(m_NetServer.Socket(), x);
 			}
 			if(IsInterrupted())
 			{
