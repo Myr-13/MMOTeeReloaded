@@ -2499,6 +2499,13 @@ int CServer::Run()
 		m_RunServer = RUNNING;
 
 	m_AuthManager.Init();
+	m_ThreadPool.Init(4);
+	for (int i = 0; i < 100; i++)
+	{
+		m_ThreadPool.AddTask([i]() {
+			dbg_msg("a", "hehehe %d", i);
+		});
+	}
 
 	if(Config()->m_Debug)
 	{
@@ -2812,7 +2819,7 @@ int CServer::Run()
 				t = time_get();
 				int x = (TickStartTime(m_CurrentGameTick + 1) - t) * 1000000 / time_freq() + 1;
 
-				PacketWaiting = x > 0 ? net_socket_read_wait(m_NetServer.Socket(), x) : true;
+				PacketWaiting = (x <= 0) || net_socket_read_wait(m_NetServer.Socket(), x);
 			}
 			if(IsInterrupted())
 			{

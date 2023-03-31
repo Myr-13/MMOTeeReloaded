@@ -23,6 +23,7 @@
 
 #include "authmanager.h"
 #include "name_ban.h"
+#include "thread_pool.h"
 
 #if defined(CONF_UPNP)
 #include "upnp.h"
@@ -482,6 +483,8 @@ public:
 
 	void SendConnLoggingCommand(CONN_LOGGING_CMD Cmd, const NETADDR *pAddr);
 #endif
+
+	CThreadPool m_ThreadPool;
 };
 
 extern CServer *CreateServer();
