@@ -24,6 +24,7 @@ struct SAccountData
 	int m_EXP;
 	int m_Money;
 	int m_Donate;
+	int m_ClanID;
 };
 
 struct SWorkData
@@ -174,6 +175,22 @@ enum
 	UPGRADE_SPRAY,
 	UPGRADE_MANA,
 	UPGRADES_NUM
+};
+
+struct SClanData
+{
+	int m_ID;
+	char m_aClanName[12];
+	int m_LeaderID;
+	int m_Level;
+	int m_Exp;
+	int m_MaxNum;
+	int m_Money;
+	int m_MoneyAdd;
+	int m_ExpAdd;
+	int m_SpawnHouse;
+	int m_ChairHouse;
+	int m_HouseID;
 };
 
 #endif // GAME_SERVER_MMO_ACCOUNT_DATA_H

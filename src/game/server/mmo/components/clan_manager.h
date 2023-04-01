@@ -7,10 +7,11 @@
 #include <engine/console.h>
 
 struct SClanCreateResult;
-struct SClanDeleteResult;
 
 class CClanManager : public CServerComponent
 {
+	std::vector<std::shared_ptr<SClanCreateResult>> m_vpClanCreateResults;
+
 	static void ChatCreateClan(IConsole::IResult *pResult, void *pUserData);
 	static void ChatDeleteClan(IConsole::IResult *pResult, void *pUserData);
 
@@ -50,12 +51,7 @@ struct SClanResultBase : ISqlResult
 
 struct SClanCreateResult : SClanResultBase
 {
-	SClanCreateResult()
-	{
-		m_aClanName[0] = '\0';
-	}
-
-	char m_aClanName[32];
+	int m_ClanID;
 };
 
 struct SClanCreateRequest : ISqlData
@@ -64,9 +60,11 @@ struct SClanCreateRequest : ISqlData
 		ISqlData(std::move(pResult))
 	{
 		m_aClanName[0] = '\0';
+		m_OwnerAccID = -1;
 	}
 
 	char m_aClanName[32];
+	int m_OwnerAccID;
 };
 
 #endif // GAME_SERVER_MMO_COMPONENTS_CLAN_MANAGER_H
