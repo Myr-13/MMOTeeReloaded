@@ -23,6 +23,7 @@
 #include "mmo/components/account_manager.h"
 #include "mmo/components/vote_menu.h"
 #include "mmo/components/admin_commands.h"
+#include "mmo/components/clan_manager.h"
 
 #include "mmo/mmo_core.h"
 
@@ -490,6 +491,7 @@ public:
 	CAccountManager m_AccountManager;
 	CVoteMenu m_VoteMenu;
 	CAdminCommands m_AdminCommands;
+	CClanManager m_ClanManager;
 
 	CMMOCore m_MMOCore;
 

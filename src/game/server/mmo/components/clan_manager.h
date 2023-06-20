@@ -39,6 +39,9 @@ public:
 
 	void CreateClan(int ClientID, const char *pClanName);
 	void DeleteClan(int ClientID, const char *pClanName);
+
+	SClanData *GetClan(const char *pName);
+	SClanData *GetClan(int ID);
 };
 
 struct SClanResultBase : ISqlResult
@@ -91,7 +94,6 @@ struct SClanDeleteResult : SClanResultBase
 	SClanDeleteResult()
 	{
 		m_aClanName[0] = '\0';
-
 	}
 
 	char m_aClanName[32];

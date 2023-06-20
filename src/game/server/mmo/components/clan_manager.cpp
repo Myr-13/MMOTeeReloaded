@@ -80,6 +80,7 @@ void CClanManager::CreateClan(int ClientID, const char *pClanName)
 
 	auto pResult = std::make_shared<SClanCreateResult>();
 	pResult->m_ClientID = ClientID;
+	str_copy(pResult->m_aClanName, pClanName);
 	m_vpClanCreateResults.push_back(pResult);
 
 	auto Request = std::make_unique<SClanCreateRequest>(pResult);
@@ -106,7 +107,36 @@ void CClanManager::DeleteClan(int ClientID, const char *pClanName)
 
 bool CClanManager::LoadClansThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize)
 {
+	const SClansLoadRequest *pData = dynamic_cast<const SClansLoadRequest *>(pGameData);
+	SClansLoadResult *pResult = dynamic_cast<SClansLoadResult *>(pGameData->m_pResult.get());
 
+	char aBuf[64];
+	
+	// Load all clans
+	str_copy(aBuf, "SELECT * FROM clans");
+	if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+		return true;
+
+	bool End = false;
+	while(!pSqlServer->Step(&End, pError, ErrorSize) && !End)
+	{
+		SClanData Clan;
+
+		Clan.m_ID = pSqlServer->GetInt(1);
+		pSqlServer->GetString(2, Clan.m_aClanName, MAX_CLAN_LENGTH);
+		Clan.m_LeaderID = pSqlServer->GetInt(3);
+		Clan.m_Level = pSqlServer->GetInt(4);
+		Clan.m_Exp = pSqlServer->GetInt(5);
+		Clan.m_MaxNum = pSqlServer->GetInt(6);
+		Clan.m_Money = pSqlServer->GetInt(7);
+		Clan.m_MoneyAdd = pSqlServer->GetInt(8);
+		Clan.m_ExpAdd = pSqlServer->GetInt(9);
+		Clan.m_SpawnHouse = pSqlServer->GetInt(10);
+		Clan.m_ChairHouse = pSqlServer->GetInt(11);
+		Clan.m_HouseID = pSqlServer->GetInt(12);
+
+		pResult->m_vClansData.push_back(Clan);
+	}
 
 	return false;
 }
@@ -175,8 +205,55 @@ void CClanManager::OnTick()
 		if (pResult->m_State == SAccountResultBase::STATE_SUCCESSFUL)
 		{
 			pPly->m_AccData.m_ClanID = pResult->m_ClanID;
+
+			// Create clan in cache
+			SClanData Clan;
+			Clan.m_ID = pResult->m_ClanID;
+			str_copy(Clan.m_aClanName, pResult->m_aClanName);
+			Clan.m_LeaderID = pPly->m_AccData.m_ID;
+			Clan.m_Level = 1;
+			Clan.m_Exp = 0;
+			Clan.m_MaxNum = 2;
+			Clan.m_Money = 0;
+			Clan.m_MoneyAdd = 0;
+			Clan.m_ExpAdd = 0;
+			Clan.m_SpawnHouse = 0;
+			Clan.m_ChairHouse = 0;
+			Clan.m_HouseID = -1;
+
+			m_vClansData.push_back(Clan);
 		}
 
 		m_vpClanCreateResults.erase(m_vpClanCreateResults.begin() + i);
 	}
+
+	// Check if load clans completed
+	{
+		if (!m_pClansLoadResult || !m_pClansLoadResult->m_Completed)
+			return;
+		
+		m_vClansData = m_pClansLoadResult->m_vClansData;
+
+		dbg_msg("clans", "loaded %ld clans", m_vClansData.size());
+
+		m_pClansLoadResult = nullptr;
+	}
+}
+
+SClanData *CClanManager::GetClan(const char *pName)
+{
+	for(SClanData &Clan : m_vClansData)
+		if(str_comp(Clan.m_aClanName, pName) == 0)
+			return &Clan;
+
+	return 0x0;
+}
+
+SClanData *CClanManager::GetClan(int ID)
+{
+	for(SClanData &Clan : m_vClansData)
+		if(Clan.m_ID == ID)
+			return &Clan;
+
+	return 0x0;
 }

@@ -311,7 +311,24 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+
+	const char *pClanName = Server()->ClientClan(m_ClientID);
+
+	if(m_LoggedIn)
+	{
+		if(m_AccData.m_ID == 0)
+			pClanName = " ";
+		else
+		{
+			SClanData *pClan = GameServer()->m_ClanManager.GetClan(m_AccData.m_ID);
+			if(pClan)
+				pClanName = pClan->m_aClanName;
+			else
+				pClanName = "(SRV ERROR)";
+		}
+	}
+
+	StrToInts(&pClientInfo->m_Clan0, 3, pClanName);
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_aSkinName);
 	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
