@@ -146,6 +146,46 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		MMOCore()->CraftItem(ClientID, Value1, Count);
 		RebuildMenu(ClientID);
 	}
+	else if(str_scan(aCmd, "cln_upgr_%d", &Value1))
+	{
+		// WARNING: BE CAREFULLY, WHEN ADDING NEW CLAN UPGRADES
+
+		// Get player
+		CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
+		int ClanID = pPly->m_AccData.m_ClanID;
+
+		if(ClanID == 0)
+			return;
+
+		// Get clan
+		SClanData *pClan = GameServer()->m_ClanManager.GetClan(ClanID);
+
+		if(!pClan)
+			return;
+
+		// Check for leader
+		if(pClan->m_LeaderID != pPly->m_AccData.m_ID)
+		{
+			GameServer()->SendChatTarget(ClientID, "Only leader can buy upgrades for clan.");
+			return;
+		}
+
+		int *pClanUpgrade = &pClan->m_MaxNum;
+		int Cost = GameServer()->m_ClanManager.GetMoneyForUpgrade(Value1, pClanUpgrade[Value1]);
+
+		if(pClan->m_Money < Cost)
+		{
+			GameServer()->SendChatTarget(ClientID, "Your clan don't have enought money in bank.");
+			return;
+		}
+
+		pClan->m_Money -= Cost;
+		pClanUpgrade[Value1]++;
+
+		GameServer()->SendChatTarget(ClientID, "Upgrade successful!");
+
+		RebuildMenu(ClientID);
+	}
 }
 
 void CVoteMenu::OnPlayerLeft(int ClientID)
@@ -365,24 +405,44 @@ void CVoteMenu::RebuildMenu(int ClientID)
 			return;
 		}
 
-		str_format(aBuf, sizeof(aBuf), "► Max number of members: %d", pClan->m_MaxNum);
+		CClanManager *pClanMgr = &GameServer()->m_ClanManager;
+
+		str_format(aBuf, sizeof(aBuf), "☞ Max number of members: %d", pClan->m_MaxNum);
 		AddMenuVote(ClientID, "cln_upgr_0", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Add money: %d", pClan->m_MoneyAdd);
-		AddMenuVote(ClientID, "cln_upgr_1", aBuf);
-		AddMenuVote(ClientID, "null", "Additional money for all members");
-		str_format(aBuf, sizeof(aBuf), "► Add exp: %d", pClan->m_MoneyAdd);
-		AddMenuVote(ClientID, "cln_upgr_2", aBuf);
-		AddMenuVote(ClientID, "null", "Additional exp for all members");
-		str_format(aBuf, sizeof(aBuf), "► Spawn in house: %d", pClan->m_SpawnHouse);
-		AddMenuVote(ClientID, "cln_upgr_3", aBuf);
-		AddMenuVote(ClientID, "null", "Spawning in clan houses (Available only in first and second clan houses)");
-		str_format(aBuf, sizeof(aBuf), "► Chairs in house: %d", pClan->m_ChairHouse);
-		AddMenuVote(ClientID, "cln_upgr_4", aBuf);
-		AddMenuVote(ClientID, "null", "Give additional money and exp from chairs in clan house");
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_MAX_NUMBER, pClan->m_MaxNum));
+		AddMenuVote(ClientID, "null", aBuf);
 
 		AddMenuVote(ClientID, "null", "");
 
-		AddMenuVote(ClientID, "null", "TODO: Add members list");
+		str_format(aBuf, sizeof(aBuf), "☞ Add money: %d", pClan->m_MoneyAdd);
+		AddMenuVote(ClientID, "cln_upgr_1", aBuf);
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_MONEY, pClan->m_MaxNum));
+		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVote(ClientID, "null", "Additional money for all members");
+
+		AddMenuVote(ClientID, "null", "");
+
+		str_format(aBuf, sizeof(aBuf), "☞ Add exp: %d", pClan->m_MoneyAdd);
+		AddMenuVote(ClientID, "cln_upgr_2", aBuf);
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_EXP, pClan->m_MaxNum));
+		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVote(ClientID, "null", "Additional exp for all members");
+
+		AddMenuVote(ClientID, "null", "");
+
+		str_format(aBuf, sizeof(aBuf), "☞ Spawn in house: %d", pClan->m_SpawnHouse);
+		AddMenuVote(ClientID, "cln_upgr_3", aBuf);
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_SPAWN_HOUSE, pClan->m_MaxNum));
+		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVote(ClientID, "null", "Spawning in clan houses (Available only in first and second clan houses)");
+		
+		AddMenuVote(ClientID, "null", "");
+
+		str_format(aBuf, sizeof(aBuf), "☞ Chairs in house: %d", pClan->m_ChairHouse);
+		AddMenuVote(ClientID, "cln_upgr_4", aBuf);
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_CHAIRS, pClan->m_MaxNum));
+		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVote(ClientID, "null", "Give additional money and exp from chairs in clan house");
 
 		AddBack(ClientID, MENU_MAIN);
 	}
