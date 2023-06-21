@@ -66,15 +66,24 @@ bool CClanManager::CreateClanThread(IDbConnection *pSqlServer, const ISqlData *p
 
 	str_format(pResult->m_aMessage, sizeof(pResult->m_aMessage), "Clan created successfully.");
 	pResult->m_State = SClanResultBase::STATE_SUCCESSFUL;
+	pResult->m_ClanID = ClanID;
 
 	return false;
 }
 
 void CClanManager::CreateClan(int ClientID, const char *pClanName)
 {
-	if(!GameServer()->m_apPlayers[ClientID]->m_LoggedIn)
+	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
+
+	if(!pPly->m_LoggedIn)
 	{
 		GameServer()->SendChatTarget(ClientID, "Login first!");
+		return;
+	}
+
+	if(pPly->m_AccData.m_ClanID != 0)
+	{
+		GameServer()->SendChatTarget(ClientID, "You already in clan. Use /clan_leave for leave from clan.");
 		return;
 	}
 
@@ -179,10 +188,27 @@ void CClanManager::ChatDeleteClan(IConsole::IResult *pResult, void *pUserData)
 	pThis->DeleteClan(pResult->m_ClientID, pName);
 }
 
+void CClanManager::LeaveClan(int ClientID)
+{
+	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
+
+	if(!pPly || !pPly->m_LoggedIn)
+		return;
+
+	pPly->m_AccData.m_ClanID = 0;
+	GameServer()->SendChatTarget(ClientID, "You have left from clan.");
+}
+
+void CClanManager::ChatLeaveClan(IConsole::IResult *pResult, void *pUserData)
+{
+	((CClanManager *)pUserData)->LeaveClan(pResult->m_ClientID);
+}
+
 void CClanManager::OnConsoleInit()
 {
 	Console()->Register("clan_create", "s[name]", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatCreateClan, this, "Create clan");
 	Console()->Register("clan_delete", "s[name]", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatDeleteClan, this, "Delete your clan");
+	Console()->Register("clan_leave", "", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatLeaveClan, this, "Leave from clan");
 
 	LoadClans();
 }
@@ -256,4 +282,18 @@ SClanData *CClanManager::GetClan(int ID)
 			return &Clan;
 
 	return 0x0;
+}
+
+int CClanManager::GetMoneyForUpgrade(int UpgradeID, int UpgradeCount)
+{
+	UpgradeCount += 1;
+
+	switch(UpgradeID)
+	{
+	case CLAN_UPGRADE_MAX_NUMBER: return 1250 * UpgradeCount;
+	case CLAN_UPGRADE_ADD_MONEY:
+	case CLAN_UPGRADE_ADD_EXP: return 1000 * UpgradeCount;
+	case CLAN_UPGRADE_SPAWN_HOUSE: return 15000;
+	case CLAN_UPGRADE_CHAIRS: return 1500 * UpgradeCount;
+	}
 }

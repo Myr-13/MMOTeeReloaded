@@ -316,11 +316,12 @@ void CPlayer::Snap(int SnappingClient)
 
 	if(m_LoggedIn)
 	{
-		if(m_AccData.m_ID == 0)
+		if(m_AccData.m_ClanID == 0)
 			pClanName = " ";
 		else
 		{
-			SClanData *pClan = GameServer()->m_ClanManager.GetClan(m_AccData.m_ID);
+			SClanData *pClan = GameServer()->m_ClanManager.GetClan(m_AccData.m_ClanID);
+
 			if(pClan)
 				pClanName = pClan->m_aClanName;
 			else

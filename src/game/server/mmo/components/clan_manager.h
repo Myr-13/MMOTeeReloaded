@@ -12,6 +12,15 @@ struct SClanCreateResult;
 struct SClanDeleteResult;
 struct SClansLoadResult;
 
+enum
+{
+	CLAN_UPGRADE_MAX_NUMBER,
+	CLAN_UPGRADE_ADD_MONEY,
+	CLAN_UPGRADE_ADD_EXP,
+	CLAN_UPGRADE_SPAWN_HOUSE,
+	CLAN_UPGRADE_CHAIRS
+};
+
 class CClanManager : public CServerComponent
 {
 	std::vector<std::shared_ptr<SClanCreateResult>> m_vpClanCreateResults;
@@ -23,6 +32,7 @@ class CClanManager : public CServerComponent
 	// Chat commands
 	static void ChatCreateClan(IConsole::IResult *pResult, void *pUserData);
 	static void ChatDeleteClan(IConsole::IResult *pResult, void *pUserData);
+	static void ChatLeaveClan(IConsole::IResult *pResult, void *pUserData);
 
 	// DB Threads
 	static bool CreateClanThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
@@ -39,9 +49,12 @@ public:
 
 	void CreateClan(int ClientID, const char *pClanName);
 	void DeleteClan(int ClientID, const char *pClanName);
+	void LeaveClan(int ClientID);
 
 	SClanData *GetClan(const char *pName);
 	SClanData *GetClan(int ID);
+
+	int GetMoneyForUpgrade(int UpgradeID, int UpgradeCount);
 };
 
 struct SClanResultBase : ISqlResult
