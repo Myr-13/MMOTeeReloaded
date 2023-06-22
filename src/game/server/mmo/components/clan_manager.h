@@ -6,11 +6,13 @@
 #include <engine/console.h>
 #include <engine/server/databases/connection_pool.h>
 #include <game/server/mmo/clan_data.h>
+#include <game/server/mmo/account_data.h>
 
 struct SClanResultBase;
 struct SClanCreateResult;
 struct SClanDeleteResult;
 struct SClansLoadResult;
+struct SClanGetMembersResult;
 
 enum
 {
@@ -33,19 +35,26 @@ class CClanManager : public CServerComponent
 	static void ChatCreateClan(IConsole::IResult *pResult, void *pUserData);
 	static void ChatDeleteClan(IConsole::IResult *pResult, void *pUserData);
 	static void ChatLeaveClan(IConsole::IResult *pResult, void *pUserData);
+	static void ChatInviteClan(IConsole::IResult *pResult, void *pUserData);
 
 	// DB Threads
 	static bool CreateClanThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
 	static bool DeleteClanThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
 	static bool LoadClansThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
+	static bool SaveClansThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
+	static bool GetClanMembersThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
 
 	CDbConnectionPool *DBPool();
 
 	void LoadClans();
+	void SaveClans();
+
+	void InternalSendClanInvite(int ClanID, int ClientID) {};
 
 public:
 	virtual void OnConsoleInit() override;
 	virtual void OnTick() override;
+	virtual void OnShutdown() override;
 
 	void CreateClan(int ClientID, const char *pClanName);
 	void DeleteClan(int ClientID, const char *pClanName);
@@ -55,6 +64,8 @@ public:
 	SClanData *GetClan(int ID);
 
 	int GetMoneyForUpgrade(int UpgradeID, int UpgradeCount);
+
+	void SendClanInvite(int ClanID, int ClientID);
 };
 
 struct SClanResultBase : ISqlResult
@@ -136,6 +147,43 @@ struct SClansLoadRequest : ISqlData
 		ISqlData(std::move(pResult))
 	{
 	}
+};
+
+struct SClansSaveRequest : ISqlData
+{
+	SClansSaveRequest() :
+		ISqlData(0x0)
+	{
+	}
+
+	std::vector<SClanData> m_vClans;
+};
+
+struct SClanGetMembersResult : ISqlResult
+{
+	enum
+	{
+		GET_MEMBERS_RESULT_VOTES,
+		GET_MEMBERS_RESULT_INVITE
+	};
+
+	SClanGetMembersResult() = default;
+
+	std::vector<SAccountData> m_vMembers;
+	int m_Type;
+	int m_ClientID;
+	int m_ClientID2;
+};
+
+struct SClanGetMembersRequest : ISqlData
+{
+	SClanGetMembersRequest(std::shared_ptr<SClanGetMembersResult> pResult) :
+		ISqlData(std::move(pResult))
+	{
+		m_ClanID = 0;
+	}
+
+	int m_ClanID;
 };
 
 #endif // GAME_SERVER_MMO_COMPONENTS_CLAN_MANAGER_H

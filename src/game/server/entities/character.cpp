@@ -1036,17 +1036,22 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	{
 		pFromPly = GameServer()->m_apPlayers[From];
 
-		if (m_pPlayer->m_AccData.m_Level < 20 || pFromPly->m_AccData.m_Level < 20)
+		if(m_pPlayer->m_AccData.m_Level < 20 || pFromPly->m_AccData.m_Level < 20)
 			return false;
 
 		Dmg += MMOCore()->GetPlusDamage(From);
+
+		// Clan mates can't damage other clan mates
+		if(m_pPlayer->GetCID() != From)
+			if(pFromPly->m_AccData.m_ClanID != 0 && pFromPly->m_AccData.m_ClanID == m_pPlayer->m_AccData.m_ClanID)
+				return false;
 	}
 
 	if(Dmg)
 	{
 		// Emote
 		m_EmoteType = EMOTE_PAIN;
-		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
+		m_EmoteStop = Server()->Tick() + Server()->TickSpeed() / 2;
 
 		if(m_Armor)
 		{

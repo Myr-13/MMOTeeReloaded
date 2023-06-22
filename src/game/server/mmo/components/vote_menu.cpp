@@ -1,14 +1,19 @@
 #include "vote_menu.h"
 
+#include <cstdlib>
+
+#include <game/server/entities/character.h>
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
-#include <game/server/entities/character.h>
 
 #ifdef __GNUC__
 #define str_scan(Str, Format, ...) sscanf(Str, Format, __VA_ARGS__)
 #else
 #define str_scan(Str, Format, ...) sscanf_s(Str, Format, __VA_ARGS__)
 #endif
+
+#define CLICK "☞ "
+#define VALUE "► "
 
 CVoteMenu::CVoteMenu()
 {
@@ -186,6 +191,38 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 
 		RebuildMenu(ClientID);
 	}
+	else if(!str_comp(aCmd, "cln_add_money"))
+	{
+		// Get gold count
+		int Count = 1;
+		try
+		{
+			Count = std::stoi(pMsg->m_pReason);
+		} catch(std::exception &e) {}
+
+		// Get player
+		CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
+		int ClanID = pPly->m_AccData.m_ClanID;
+
+		if(ClanID == 0)
+			return;
+
+		// Get clan
+		SClanData *pClan = GameServer()->m_ClanManager.GetClan(ClanID);
+
+		if(!pClan)
+			return;
+
+		// Process adding
+		Count = fmin(pPly->m_AccData.m_Money, Count);
+
+		pPly->m_AccData.m_Money -= Count;
+		pClan->m_Money += Count;
+
+		GameServer()->SendChatTarget(ClientID, "Money added to clan bank.");
+
+		RebuildMenu(ClientID);
+	}
 }
 
 void CVoteMenu::OnPlayerLeft(int ClientID)
@@ -252,17 +289,17 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		str_format(aBuf, sizeof(aBuf), "ღ Money: %d", pPly->m_AccData.m_Money);
 		AddMenuVote(ClientID, "null", aBuf);
 		AddMenuVote(ClientID, "null", "------------ Server");
-		AddMenuChangeVote(ClientID, MENU_INFO, "☞ Info");
+		AddMenuChangeVote(ClientID, MENU_INFO, CLICK "Info");
 		AddMenuVote(ClientID, "null", "------------ Account menu");
-		AddMenuChangeVote(ClientID, MENU_EQUIP, "☞ Equipment");
-		AddMenuChangeVote(ClientID, MENU_INVENTORY, "☞ Inventory");
-		AddMenuChangeVote(ClientID, MENU_UPGRADE, "☞ Upgrade");
+		AddMenuChangeVote(ClientID, MENU_EQUIP, CLICK "Equipment");
+		AddMenuChangeVote(ClientID, MENU_INVENTORY, CLICK "Inventory");
+		AddMenuChangeVote(ClientID, MENU_UPGRADE, CLICK "Upgrade");
 
 		AddMenuVote(ClientID, "null", "------------ Clan menu");
 		if(pPly->m_AccData.m_ClanID != 0)
 		{
-			AddMenuChangeVote(ClientID, MENU_CLAN_INFO, "☞ Info");
-			AddMenuChangeVote(ClientID, MENU_CLAN_UPGRADE, "☞ Upgrade");
+			AddMenuChangeVote(ClientID, MENU_CLAN_INFO, CLICK "Info");
+			AddMenuChangeVote(ClientID, MENU_CLAN_UPGRADE, CLICK "Upgrade");
 		}
 		else
 			AddMenuVote(ClientID, "null", "You not in clan");
@@ -275,7 +312,7 @@ void CVoteMenu::RebuildMenu(int ClientID)
 
 			for (SShopEntry Entry : MMOCore()->GetShopItems())
 			{
-				str_format(aBuf, sizeof(aBuf), "☞ %s",
+				str_format(aBuf, sizeof(aBuf), CLICK "%s",
 					MMOCore()->GetItemName(Entry.m_ID));
 				str_format(aCmd, sizeof(aCmd), "shop%d", Entry.m_ID);
 				AddMenuVote(ClientID, aCmd, aBuf);
@@ -294,7 +331,7 @@ void CVoteMenu::RebuildMenu(int ClientID)
 
 			for (SCraftData &Entry : MMOCore()->GetCrafts())
 			{
-				str_format(aBuf, sizeof(aBuf), "☞ %s",
+				str_format(aBuf, sizeof(aBuf), CLICK "%s",
 					MMOCore()->GetItemName(Entry.m_ID));
 				str_format(aCmd, sizeof(aCmd), "craft%d", Entry.m_ID);
 				AddMenuVote(ClientID, aCmd, aBuf);
@@ -331,12 +368,12 @@ void CVoteMenu::RebuildMenu(int ClientID)
 	else if(Menu == MENU_INVENTORY)
 	{
 		AddMenuVote(ClientID, "null", "------------ Your inventory");
-		AddMenuVote(ClientID, "inv_list0", "☞ Profession");
-		AddMenuVote(ClientID, "inv_list1", "☞ Craft");
-		AddMenuVote(ClientID, "inv_list2", "☞ Use");
-		AddMenuVote(ClientID, "inv_list3", "☞ Artifact");
-		AddMenuVote(ClientID, "inv_list4", "☞ Weapon");
-		AddMenuVote(ClientID, "inv_list5", "☞ Other");
+		AddMenuVote(ClientID, "inv_list0", CLICK "Profession");
+		AddMenuVote(ClientID, "inv_list1", CLICK "Craft");
+		AddMenuVote(ClientID, "inv_list2", CLICK "Use");
+		AddMenuVote(ClientID, "inv_list3", CLICK "Artifact");
+		AddMenuVote(ClientID, "inv_list4", CLICK "Weapon");
+		AddMenuVote(ClientID, "inv_list5", CLICK "Other");
 
 		AddBack(ClientID, MENU_MAIN);
 	}
@@ -346,12 +383,12 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		char aBuf[128];
 		char aCmd[64];
 
-		str_format(aBuf, sizeof(aBuf), "► Upgrade points: %d", pPly->m_AccUp.m_UpgradePoints);
+		str_format(aBuf, sizeof(aBuf), VALUE "Upgrade points: %d", pPly->m_AccUp.m_UpgradePoints);
 		AddMenuVote(ClientID, "null", aBuf);
 
 		for (int i = UPGRADE_DAMAGE; i < UPGRADES_NUM; i++)
 		{
-			str_format(aBuf, sizeof(aBuf), "☞ [%d] %s", pPly->m_AccUp[i], MMOCore()->GetUpgradeName(i));
+			str_format(aBuf, sizeof(aBuf), CLICK "[%d] %s", pPly->m_AccUp[i], MMOCore()->GetUpgradeName(i));
 			str_format(aCmd, sizeof(aCmd), "upgr%d", i);
 			AddMenuVote(ClientID, aCmd, aBuf);
 		}
@@ -375,13 +412,16 @@ void CVoteMenu::RebuildMenu(int ClientID)
 			return;
 		}
 
-		str_format(aBuf, sizeof(aBuf), "► Level: %d", pClan->m_Level);
+		str_format(aBuf, sizeof(aBuf), VALUE "Level: %d", pClan->m_Level);
 		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Exp: %d", pClan->m_Exp);
+		str_format(aBuf, sizeof(aBuf), VALUE "Exp: %d", pClan->m_Exp);
 		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Bank: %d", pClan->m_Money);
+		str_format(aBuf, sizeof(aBuf), VALUE "Bank: %d", pClan->m_Money);
 		AddMenuVote(ClientID, "null", aBuf);
 
+		AddMenuVote(ClientID, "null", "");
+		AddMenuVote(ClientID, "cln_add_money", CLICK "Add money to bank");
+		AddMenuVote(ClientID, "null", "Reason = count");
 		AddMenuVote(ClientID, "null", "");
 
 		AddMenuVote(ClientID, "null", "TODO: Add members list");
@@ -405,42 +445,47 @@ void CVoteMenu::RebuildMenu(int ClientID)
 			return;
 		}
 
+		str_format(aBuf, sizeof(aBuf), VALUE "Bank: %d", pClan->m_Money);
+		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVote(ClientID, "null", "");
+
 		CClanManager *pClanMgr = &GameServer()->m_ClanManager;
 
-		str_format(aBuf, sizeof(aBuf), "☞ Max number of members: %d", pClan->m_MaxNum);
+		str_format(aBuf, sizeof(aBuf), CLICK "Max number of members: %d", pClan->m_MaxNum);
 		AddMenuVote(ClientID, "cln_upgr_0", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_MAX_NUMBER, pClan->m_MaxNum));
+		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_MAX_NUMBER, pClan->m_MaxNum));
 		AddMenuVote(ClientID, "null", aBuf);
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), "☞ Add money: %d", pClan->m_MoneyAdd);
+		str_format(aBuf, sizeof(aBuf), CLICK "Add money: %d", pClan->m_MoneyAdd);
 		AddMenuVote(ClientID, "cln_upgr_1", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_MONEY, pClan->m_MaxNum));
+		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_MONEY, pClan->m_MoneyAdd));
 		AddMenuVote(ClientID, "null", aBuf);
 		AddMenuVote(ClientID, "null", "Additional money for all members");
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), "☞ Add exp: %d", pClan->m_MoneyAdd);
+		str_format(aBuf, sizeof(aBuf), CLICK "Add exp: %d", pClan->m_ExpAdd);
 		AddMenuVote(ClientID, "cln_upgr_2", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_EXP, pClan->m_MaxNum));
+		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_EXP, pClan->m_ExpAdd));
 		AddMenuVote(ClientID, "null", aBuf);
 		AddMenuVote(ClientID, "null", "Additional exp for all members");
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), "☞ Spawn in house: %d", pClan->m_SpawnHouse);
+		str_format(aBuf, sizeof(aBuf), CLICK "Spawn in house: %d", pClan->m_SpawnHouse);
 		AddMenuVote(ClientID, "cln_upgr_3", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_SPAWN_HOUSE, pClan->m_MaxNum));
+		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_SPAWN_HOUSE, pClan->m_SpawnHouse));
 		AddMenuVote(ClientID, "null", aBuf);
-		AddMenuVote(ClientID, "null", "Spawning in clan houses (Available only in first and second clan houses)");
-		
+		AddMenuVote(ClientID, "null", "Spawning in clan houses");
+		AddMenuVote(ClientID, "null", "Available only in top 1 and top 2 clan houses");
+
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), "☞ Chairs in house: %d", pClan->m_ChairHouse);
+		str_format(aBuf, sizeof(aBuf), CLICK "Chairs in house: %d", pClan->m_ChairHouse);
 		AddMenuVote(ClientID, "cln_upgr_4", aBuf);
-		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_CHAIRS, pClan->m_MaxNum));
+		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_CHAIRS, pClan->m_ChairHouse));
 		AddMenuVote(ClientID, "null", aBuf);
 		AddMenuVote(ClientID, "null", "Give additional money and exp from chairs in clan house");
 

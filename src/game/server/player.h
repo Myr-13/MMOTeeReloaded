@@ -224,6 +224,7 @@ public:
 	SAccountWorksData m_AccWorks;
 	SAccountUpgrade m_AccUp;
 	bool m_LoggedIn;
+	int m_ClanInviteEndTick;
 
 	void AddEXP(int EXP);
 	void AddWorkEXP(int WorkID, int EXP);

@@ -158,6 +158,47 @@ void CClanManager::LoadClans()
 	DBPool()->Execute(LoadClansThread, std::move(Request), "Load clans");
 }
 
+bool CClanManager::SaveClansThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize)
+{
+	const SClansSaveRequest *pData = dynamic_cast<const SClansSaveRequest *>(pGameData);
+
+	char aBuf[256];
+	int NumInserted;
+
+	str_copy(aBuf, "UPDATE clans SET leader_id = ?, level = ?, exp = ?, max_num = ?, money = ?, money_add = ?, exp_add = ?, spawn_house = ?, chair_house = ?, house_id = ? WHERE id = ?");
+	for(const SClanData &Clan : pData->m_vClans)
+	{
+		if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+			return true;
+
+		pSqlServer->BindInt(1, Clan.m_LeaderID);
+		pSqlServer->BindInt(2, Clan.m_Level);
+		pSqlServer->BindInt(3, Clan.m_Exp);
+		pSqlServer->BindInt(4, Clan.m_MaxNum);
+		pSqlServer->BindInt(5, Clan.m_Money);
+		pSqlServer->BindInt(6, Clan.m_MoneyAdd);
+		pSqlServer->BindInt(7, Clan.m_ExpAdd);
+		pSqlServer->BindInt(8, Clan.m_SpawnHouse);
+		pSqlServer->BindInt(9, Clan.m_ChairHouse);
+		pSqlServer->BindInt(10, Clan.m_HouseID);
+		pSqlServer->BindInt(11, Clan.m_ID);
+
+		if(pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize))
+			return true;
+	}
+
+	return false;
+}
+
+void CClanManager::SaveClans()
+{
+	dbg_msg("clans", "saving %ld clans...", m_vClansData.size());
+
+	auto Request = std::make_unique<SClansSaveRequest>();
+	Request->m_vClans = m_vClansData;
+	DBPool()->Execute(SaveClansThread, std::move(Request), "Save clans");
+}
+
 void CClanManager::ChatCreateClan(IConsole::IResult *pResult, void *pUserData)
 {
 	CClanManager *pThis = (CClanManager *)pUserData;
@@ -266,6 +307,11 @@ void CClanManager::OnTick()
 	}
 }
 
+void CClanManager::OnShutdown()
+{
+	SaveClans();
+}
+
 SClanData *CClanManager::GetClan(const char *pName)
 {
 	for(SClanData &Clan : m_vClansData)
@@ -296,4 +342,9 @@ int CClanManager::GetMoneyForUpgrade(int UpgradeID, int UpgradeCount)
 	case CLAN_UPGRADE_SPAWN_HOUSE: return 15000;
 	case CLAN_UPGRADE_CHAIRS: return 1500 * UpgradeCount;
 	}
+}
+
+void CClanManager::SendClanInvite(int ClanID, int ClientID)
+{
+
 }
