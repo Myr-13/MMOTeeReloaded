@@ -3322,6 +3322,10 @@ void CGameContext::OnShutdown()
 		aio_free(m_pTeeHistorianFile);
 	}
 
+	// Shutdown components
+	for(auto &pComponent : m_vpComponents)
+		pComponent->OnShutdown();
+
 	DeleteTempfile();
 	Console()->ResetServerGameSettings();
 	Collision()->Dest();

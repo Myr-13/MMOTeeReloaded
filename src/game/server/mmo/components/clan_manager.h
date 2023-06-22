@@ -37,6 +37,11 @@ class CClanManager : public CServerComponent
 	static void ChatLeaveClan(IConsole::IResult *pResult, void *pUserData);
 	static void ChatInviteClan(IConsole::IResult *pResult, void *pUserData);
 
+	// TODO: Create safe shutdown (saving all clans and shutdown server after)
+
+	// Console commands
+	static void ConSaveClans(IConsole::IResult *pResult, void *pUserData);
+
 	// DB Threads
 	static bool CreateClanThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
 	static bool DeleteClanThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);

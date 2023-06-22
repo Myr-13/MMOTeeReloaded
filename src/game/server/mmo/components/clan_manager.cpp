@@ -251,6 +251,8 @@ void CClanManager::OnConsoleInit()
 	Console()->Register("clan_delete", "s[name]", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatDeleteClan, this, "Delete your clan");
 	Console()->Register("clan_leave", "", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatLeaveClan, this, "Leave from clan");
 
+	Console()->Register("save_clans", "", CFGFLAG_SERVER | CFGFLAG_GAME, ConSaveClans, this, "Save all clans (DO ALWAYS BEFORE SHUTDOWN)");
+
 	LoadClans();
 }
 
@@ -347,4 +349,9 @@ int CClanManager::GetMoneyForUpgrade(int UpgradeID, int UpgradeCount)
 void CClanManager::SendClanInvite(int ClanID, int ClientID)
 {
 
+}
+
+void CClanManager::ConSaveClans(IConsole::IResult *pResult, void *pUserData)
+{
+	((CClanManager *)pUserData)->SaveClans();
 }
