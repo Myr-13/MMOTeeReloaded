@@ -1086,11 +1086,9 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		if (From >= 0)
 		{
 			CPlayer *pFrom = GameServer()->m_apPlayers[From];
-			CCharacter *pFromChar = 0x0;
+
 			if (pFrom && pFrom->m_LoggedIn)
 			{
-				pFromChar = pFrom->GetCharacter();
-
 				// Add EXP for killing
 				pFrom->AddEXP(m_pPlayer->m_AccData.m_Level * 2);
 			}

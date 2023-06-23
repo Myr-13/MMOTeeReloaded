@@ -27,6 +27,7 @@ class CClanManager : public CServerComponent
 {
 	std::vector<std::shared_ptr<SClanCreateResult>> m_vpClanCreateResults;
 	std::vector<std::shared_ptr<SClanDeleteResult>> m_vpClanDeleteResults;
+	std::vector<std::shared_ptr<SClanGetMembersResult>> m_vpClanGetMembersResults;
 	std::shared_ptr<SClansLoadResult> m_pClansLoadResult;
 
 	std::vector<SClanData> m_vClansData;
@@ -54,12 +55,13 @@ class CClanManager : public CServerComponent
 	void LoadClans();
 	void SaveClans();
 
-	void InternalSendClanInvite(int ClanID, int ClientID) {};
+	void InternalSendClanInvite(int ClanID, int MembersCount, int From, int To);
 
 public:
 	virtual void OnConsoleInit() override;
 	virtual void OnTick() override;
 	virtual void OnShutdown() override;
+	virtual void OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame) override;
 
 	void CreateClan(int ClientID, const char *pClanName);
 	void DeleteClan(int ClientID, const char *pClanName);
@@ -70,7 +72,7 @@ public:
 
 	int GetMoneyForUpgrade(int UpgradeID, int UpgradeCount);
 
-	void SendClanInvite(int ClanID, int ClientID);
+	void SendClanInvite(int From, int ClientID);
 };
 
 struct SClanResultBase : ISqlResult
@@ -172,12 +174,19 @@ struct SClanGetMembersResult : ISqlResult
 		GET_MEMBERS_RESULT_INVITE
 	};
 
-	SClanGetMembersResult() = default;
+	SClanGetMembersResult()
+	{
+		m_Type = GET_MEMBERS_RESULT_INVITE;
+		m_ClientID = -1;
+		m_ClientID2 = -1;
+		m_ClanID = 0;
+	}
 
 	std::vector<SAccountData> m_vMembers;
 	int m_Type;
 	int m_ClientID;
 	int m_ClientID2;
+	int m_ClanID;
 };
 
 struct SClanGetMembersRequest : ISqlData

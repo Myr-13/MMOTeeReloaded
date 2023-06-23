@@ -225,6 +225,7 @@ public:
 	SAccountUpgrade m_AccUp;
 	bool m_LoggedIn;
 	int m_ClanInviteEndTick;
+	int m_ClanInviteID;
 
 	void AddEXP(int EXP);
 	void AddWorkEXP(int WorkID, int EXP);

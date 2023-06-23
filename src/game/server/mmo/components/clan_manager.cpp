@@ -245,11 +245,41 @@ void CClanManager::ChatLeaveClan(IConsole::IResult *pResult, void *pUserData)
 	((CClanManager *)pUserData)->LeaveClan(pResult->m_ClientID);
 }
 
+bool CClanManager::GetClanMembersThread(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize)
+{
+	const SClanGetMembersRequest *pData = dynamic_cast<const SClanGetMembersRequest *>(pGameData);
+	SClanGetMembersResult *pResult = dynamic_cast<SClanGetMembersResult *>(pGameData->m_pResult.get());
+
+	char aBuf[128];
+	
+	// Load all clans
+	str_copy(aBuf, "SELECT id, name, level FROM users WHERE clan_id = ?");
+	if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
+		return true;
+
+	pSqlServer->BindInt(1, pData->m_ClanID);
+
+	bool End = false;
+	while(!pSqlServer->Step(&End, pError, ErrorSize) && !End)
+	{
+		SAccountData Member;
+		
+		Member.m_ID = pSqlServer->GetInt(1);
+		pSqlServer->GetString(2, Member.m_aAccountName, MAX_LOGIN_LENGTH);
+		Member.m_Level = pSqlServer->GetInt(3);
+
+		pResult->m_vMembers.push_back(Member);
+	}
+
+	return false;
+}
+
 void CClanManager::OnConsoleInit()
 {
 	Console()->Register("clan_create", "s[name]", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatCreateClan, this, "Create clan");
 	Console()->Register("clan_delete", "s[name]", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatDeleteClan, this, "Delete your clan");
 	Console()->Register("clan_leave", "", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatLeaveClan, this, "Leave from clan");
+	Console()->Register("clan_invite", "r[name]", CFGFLAG_SERVER | CFGFLAG_CHAT, ChatInviteClan, this, "Invite player to your clan");
 
 	Console()->Register("save_clans", "", CFGFLAG_SERVER | CFGFLAG_GAME, ConSaveClans, this, "Save all clans (DO ALWAYS BEFORE SHUTDOWN)");
 
@@ -296,6 +326,29 @@ void CClanManager::OnTick()
 		m_vpClanCreateResults.erase(m_vpClanCreateResults.begin() + i);
 	}
 
+	for (unsigned long i = 0; i < m_vpClanGetMembersResults.size(); i++)
+	{
+		auto &pResult = m_vpClanGetMembersResults[i];
+
+		if(!pResult->m_Completed)
+			continue;
+		if(!GameServer()->m_apPlayers[pResult->m_ClientID])
+			continue;
+		if(!GameServer()->m_apPlayers[pResult->m_ClientID2])
+			continue;
+
+		if(pResult->m_Type == SClanGetMembersResult::GET_MEMBERS_RESULT_INVITE)
+		{
+			InternalSendClanInvite(pResult->m_ClanID, pResult->m_vMembers.size(), pResult->m_ClientID, pResult->m_ClientID2);
+		}
+		else // GET_MEMBERS_RESULT_VOTES
+		{
+
+		}
+
+		m_vpClanGetMembersResults.erase(m_vpClanGetMembersResults.begin() + i);
+	}
+
 	// Check if load clans completed
 	{
 		if (!m_pClansLoadResult || !m_pClansLoadResult->m_Completed)
@@ -306,6 +359,42 @@ void CClanManager::OnTick()
 		dbg_msg("clans", "loaded %ld clans", m_vClansData.size());
 
 		m_pClansLoadResult = nullptr;
+	}
+}
+
+void CClanManager::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
+{
+	if(MsgID != NETMSGTYPE_CL_VOTE)
+		return;
+
+	CNetMsg_Cl_Vote *pMsg = (CNetMsg_Cl_Vote *)pRawMsg;
+	int Vote = pMsg->m_Vote;
+
+	if(Vote == 0)
+		return;
+
+	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
+
+	if(Server()->Tick() > pPly->m_ClanInviteEndTick)
+		return;
+
+	// Accept
+	if(Vote == 1)
+	{
+		pPly->m_AccData.m_ClanID = pPly->m_ClanInviteID;
+
+		// Save new clan id
+		GameServer()->m_AccountManager.Save(ClientID);
+
+		// Send the message
+		GameServer()->SendChatTarget(ClientID, "You accepted clan invite!");
+	}
+	else // Deceline
+	{
+		// 1 tick is a bypass
+		pPly->m_ClanInviteEndTick = Server()->Tick() + 1;
+
+		GameServer()->SendChatTarget(ClientID, "You decelined clan invite.");
 	}
 }
 
@@ -346,12 +435,101 @@ int CClanManager::GetMoneyForUpgrade(int UpgradeID, int UpgradeCount)
 	}
 }
 
-void CClanManager::SendClanInvite(int ClanID, int ClientID)
+void CClanManager::SendClanInvite(int From, int ClientID)
 {
+	CPlayer *pFrom = GameServer()->m_apPlayers[From];
+	CPlayer *pTo = GameServer()->m_apPlayers[ClientID];
 
+	if(!pFrom->m_LoggedIn || !pTo->m_LoggedIn)
+		return;
+
+	int ClanID = pFrom->m_AccData.m_ClanID;
+	SClanData *pClan = GetClan(ClanID);
+
+	if(!pClan)
+		return;
+
+	// Only leader can invite other players
+	if(pFrom->m_AccData.m_ID != pClan->m_LeaderID)
+	{
+		GameServer()->SendChatTarget(From, "Only leader can invite other players.");
+		return;
+	}
+
+	// Check for player clan
+	if(pTo->m_AccData.m_ClanID != 0)
+	{
+		GameServer()->SendChatTarget(From, "This player is already in clan.");
+		return;
+	}
+
+	// Create DB request
+	auto pResult = std::make_shared<SClanGetMembersResult>();
+	pResult->m_ClientID = From;
+	pResult->m_ClientID2 = ClientID;
+	pResult->m_ClanID = ClanID;
+	pResult->m_Type = SClanGetMembersResult::GET_MEMBERS_RESULT_INVITE;
+	m_vpClanGetMembersResults.push_back(pResult);
+
+	auto pRequest = std::make_unique<SClanGetMembersRequest>(pResult);
+	pRequest->m_ClanID = ClanID;
+	DBPool()->Execute(GetClanMembersThread, std::move(pRequest), "Get clan members");
+}
+
+void CClanManager::InternalSendClanInvite(int ClanID, int MembersCount, int From, int To)
+{
+	SClanData *pClan = GetClan(ClanID);
+
+	if(!pClan)
+		return;
+
+	if(MembersCount + 1 > pClan->m_MaxNum)
+	{
+		GameServer()->SendChatTarget(From, "Your clan don't have empty slots");
+		return;
+	}
+
+	// Invite
+	CPlayer *pPly = GameServer()->m_apPlayers[To];
+	pPly->m_ClanInviteEndTick = Server()->Tick() + 50 * 10;
+	pPly->m_ClanInviteID = ClanID;
+
+	// Send vote
+	CNetMsg_Sv_VoteSet Msg;
+
+	Msg.m_Timeout = 10;
+	Msg.m_pDescription = "Accept clan invite?";
+	Msg.m_pReason = "";
+
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, To);
 }
 
 void CClanManager::ConSaveClans(IConsole::IResult *pResult, void *pUserData)
 {
 	((CClanManager *)pUserData)->SaveClans();
+}
+
+void CClanManager::ChatInviteClan(IConsole::IResult *pResult, void *pUserData)
+{
+	CClanManager *pThis = (CClanManager *)pUserData;
+	int From = pResult->m_ClientID;
+	int ClientID = -1;
+
+	const char *pName = pResult->GetString(0);
+	for(int i = 0; i < MAX_PLAYERS; i++)
+	{
+		if(str_comp(pThis->Server()->ClientName(i), pName) == 0)
+		{
+			ClientID = i;
+			break;
+		}
+	}
+
+	if(ClientID == -1)
+	{
+		pThis->GameServer()->SendChatTarget(From, "Can't find player with this name");
+		return;
+	}
+
+	pThis->SendClanInvite(From, ClientID);
 }

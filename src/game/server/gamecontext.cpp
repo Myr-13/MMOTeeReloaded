@@ -934,6 +934,17 @@ void CGameContext::OnTick()
 
 		m_apPlayers[i]->Tick();
 		m_apPlayers[i]->PostTick();
+
+		if(m_apPlayers[i]->m_ClanInviteEndTick - Server()->Tick() == 0)
+		{
+			CNetMsg_Sv_VoteSet Msg;
+
+			Msg.m_Timeout = 0;
+			Msg.m_pDescription = "";
+			Msg.m_pReason = "";
+
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
+		}
 	}
 
 	if (Server()->Tick() % 10 == 0)
@@ -2045,27 +2056,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				CensorMessage(aCensoredMessage, pMsg->m_pMessage, sizeof(aCensoredMessage));
 				SendChat(ClientID, Team, aCensoredMessage, ClientID);
 			}
-		}
-		else if(MsgID == NETMSGTYPE_CL_VOTE)
-		{
-			if(!m_VoteCloseTime)
-				return;
-
-			if(g_Config.m_SvSpamprotection && pPlayer->m_LastVoteTry && pPlayer->m_LastVoteTry + Server()->TickSpeed() * 3 > Server()->Tick())
-				return;
-
-			int64_t Now = Server()->Tick();
-
-			pPlayer->m_LastVoteTry = Now;
-			pPlayer->UpdatePlaytime();
-
-			CNetMsg_Cl_Vote *pMsg = (CNetMsg_Cl_Vote *)pRawMsg;
-			if(!pMsg->m_Vote)
-				return;
-
-			pPlayer->m_Vote = pMsg->m_Vote;
-			pPlayer->m_VotePos = ++m_VotePos;
-			m_VoteUpdate = true;
 		}
 		else if(MsgID == NETMSGTYPE_CL_SETTEAM && !m_World.m_Paused)
 		{
