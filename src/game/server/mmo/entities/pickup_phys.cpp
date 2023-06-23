@@ -42,7 +42,7 @@ void CPickupPhys::Tick()
 		}
 		else if (m_Type == PICKUP_PHYS_TYPE_MONEY)
 		{
-			pPly->m_AccData.m_Money += m_Count;
+			pPly->AddMoney(m_Count);
 			GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
 			Destroy();
 

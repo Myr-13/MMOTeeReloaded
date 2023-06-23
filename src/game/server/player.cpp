@@ -837,8 +837,17 @@ void CPlayer::SpectatePlayerName(const char *pName)
 	}
 }
 
-void CPlayer::AddEXP(int EXP)
+void CPlayer::AddEXP(int EXP, bool NoBonus)
 {
+	int ClanID = m_AccData.m_ClanID;
+	if(!NoBonus && ClanID != 0)
+	{
+		SClanData *pClan = GameServer()->m_ClanManager.GetClan(ClanID);
+
+		if(pClan)
+			EXP += pClan->m_ExpAdd * 10;
+	}
+
 	m_AccData.m_EXP += EXP;
 
 	bool LevelUpped = false;
@@ -881,4 +890,20 @@ void CPlayer::AddWorkEXP(int WorkID, int EXP)
 
 	if (LevelUpped)
 		GameServer()->m_AccountManager.Save(m_ClientID);
+}
+
+void CPlayer::AddMoney(int Money, bool NoBonus)
+{
+	// TODO: Add caching of current clan
+	
+	int ClanID = m_AccData.m_ClanID;
+	if(!NoBonus && ClanID != 0)
+	{
+		SClanData *pClan = GameServer()->m_ClanManager.GetClan(ClanID);
+
+		if(pClan)
+			Money += pClan->m_MoneyAdd * 2;
+	}
+
+	m_AccData.m_Money += Money;
 }

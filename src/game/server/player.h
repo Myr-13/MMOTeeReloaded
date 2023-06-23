@@ -227,8 +227,9 @@ public:
 	int m_ClanInviteEndTick;
 	int m_ClanInviteID;
 
-	void AddEXP(int EXP);
+	void AddEXP(int EXP, bool NoBonus = false);
 	void AddWorkEXP(int WorkID, int EXP);
+	void AddMoney(int Money, bool NoBonus = false);
 };
 
 #endif

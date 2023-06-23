@@ -413,26 +413,26 @@ void CMMOCore::UseItem(int ClientID, int ItemID, int Count)
 	{
 	case ITEM_CARROT:
 	{
-		pPly->AddEXP(20 * Count);
+		pPly->AddEXP(20 * Count, true);
 		Value += 20 * Count;
 		break;
 	}
 	case ITEM_TOMATO:
 	{
-		pPly->AddEXP(30 * Count);
+		pPly->AddEXP(30 * Count, true);
 		Value += 30 * Count;
 		break;
 	}
 	case ITEM_POTATO:
 	{
-		pPly->AddEXP(50 * Count);
+		pPly->AddEXP(50 * Count, true);
 		Value += 50 * Count;
 		break;
 	}
 	case ITEM_MONEY_BAG:
 	{
 		int Rand = (rand() % 5 + 1) * Count;
-		pPly->m_AccData.m_Money += Rand;
+		pPly->AddMoney(Rand, true);
 		Value = Rand;
 
 		break;

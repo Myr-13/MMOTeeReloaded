@@ -2053,15 +2053,15 @@ void CCharacter::HandleMMOTiles(int Tile)
 
 	else if (Tile == TILE_CHAIR_10 && Server()->Tick() % Server()->TickSpeed() == 0)
 	{
-		m_pPlayer->AddEXP(10);
-		m_pPlayer->m_AccData.m_Money++;
-		GameServer()->SendMMOBroadcast(ClientID, 1.f, "+10 EXP FROM CHAIR");
+		m_pPlayer->AddEXP(10, true);
+		m_pPlayer->AddMoney(1, true);
+		GameServer()->SendMMOBroadcast(ClientID, 1.f, "+10 EXP, +1 MONEY FROM CHAIR");
 	}
 	else if (Tile == TILE_CHAIR_15 && Server()->Tick() % Server()->TickSpeed() == 0)
 	{
-		m_pPlayer->AddEXP(15);
-		m_pPlayer->m_AccData.m_Money++;
-		GameServer()->SendMMOBroadcast(ClientID, 1.f, "+15 EXP FROM CHAIR");
+		m_pPlayer->AddEXP(15, true);
+		m_pPlayer->AddMoney(1, true);
+		GameServer()->SendMMOBroadcast(ClientID, 1.f, "+15 EXP, +1 MONEY FROM CHAIR");
 	}
 
 	else if (Tile == TILE_WATER)
@@ -2092,7 +2092,7 @@ void CCharacter::HandleMMOTiles(int Tile)
 		if (MaterialCount > 0) {
 			int Money = MaterialCount / 10;
 			m_pPlayer->m_AccInv.RemItem(ITEM_MATERIAL);
-			m_pPlayer->m_AccData.m_Money += Money;
+			m_pPlayer->AddMoney(Money, true);
 			char aBuf[256];
 			str_format(aBuf, sizeof(aBuf), "You have sold %d materials for %d money", MaterialCount, Money);
 			GameServer()->SendChatTarget(ClientID, aBuf);
