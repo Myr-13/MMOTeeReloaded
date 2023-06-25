@@ -83,7 +83,7 @@ void CClanManager::CreateClan(int ClientID, const char *pClanName)
 
 	if(pPly->m_AccData.m_ClanID != 0)
 	{
-		GameServer()->SendChatTarget(ClientID, "You already in clan. Use /clan_leave for leave from clan.");
+		GameServer()->SendChatLocalize(ClientID, "You already in clan. Use /clan_leave for leave from clan.");
 		return;
 	}
 
@@ -207,7 +207,7 @@ void CClanManager::ChatCreateClan(IConsole::IResult *pResult, void *pUserData)
 
 	if(str_length(pName) + 1 > MAX_CLAN_LENGTH)
 	{
-		pThis->GameServer()->SendChatTarget(pResult->m_ClientID, "Clan name is to long");
+		pThis->GameServer()->SendChatLocalize(pResult->m_ClientID, "Clan name is to long.");
 		return;
 	}
 
@@ -222,7 +222,7 @@ void CClanManager::ChatDeleteClan(IConsole::IResult *pResult, void *pUserData)
 
 	if(str_length(pName) + 1 > MAX_CLAN_LENGTH)
 	{
-		pThis->GameServer()->SendChatTarget(pResult->m_ClientID, "Clan name is to long");
+		pThis->GameServer()->SendChatLocalize(pResult->m_ClientID, "Clan name is to long.");
 		return;
 	}
 
@@ -237,7 +237,7 @@ void CClanManager::LeaveClan(int ClientID)
 		return;
 
 	pPly->m_AccData.m_ClanID = 0;
-	GameServer()->SendChatTarget(ClientID, "You have left from clan.");
+	GameServer()->SendChatLocalize(ClientID, "You have left from clan.");
 }
 
 void CClanManager::ChatLeaveClan(IConsole::IResult *pResult, void *pUserData)
@@ -387,14 +387,14 @@ void CClanManager::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame
 		GameServer()->m_AccountManager.Save(ClientID);
 
 		// Send the message
-		GameServer()->SendChatTarget(ClientID, "You accepted clan invite!");
+		GameServer()->SendChatLocalize(ClientID, "You accepted clan invite!");
 	}
 	else // Deceline
 	{
 		// 1 tick is a bypass
 		pPly->m_ClanInviteEndTick = Server()->Tick() + 1;
 
-		GameServer()->SendChatTarget(ClientID, "You decelined clan invite.");
+		GameServer()->SendChatLocalize(ClientID, "You declined clan invite.");
 	}
 }
 
@@ -433,6 +433,8 @@ int CClanManager::GetMoneyForUpgrade(int UpgradeID, int UpgradeCount)
 	case CLAN_UPGRADE_SPAWN_HOUSE: return 15000;
 	case CLAN_UPGRADE_CHAIRS: return 1500 * UpgradeCount;
 	}
+
+	return INT_MAX;
 }
 
 void CClanManager::SendClanInvite(int From, int ClientID)
@@ -452,14 +454,14 @@ void CClanManager::SendClanInvite(int From, int ClientID)
 	// Only leader can invite other players
 	if(pFrom->m_AccData.m_ID != pClan->m_LeaderID)
 	{
-		GameServer()->SendChatTarget(From, "Only leader can invite other players.");
+		GameServer()->SendChatLocalize(From, "Only leader can invite other players.");
 		return;
 	}
 
 	// Check for player clan
 	if(pTo->m_AccData.m_ClanID != 0)
 	{
-		GameServer()->SendChatTarget(From, "This player is already in clan.");
+		GameServer()->SendChatLocalize(From, "This player is already in clan.");
 		return;
 	}
 
@@ -485,7 +487,7 @@ void CClanManager::InternalSendClanInvite(int ClanID, int MembersCount, int From
 
 	if(MembersCount + 1 > pClan->m_MaxNum)
 	{
-		GameServer()->SendChatTarget(From, "Your clan don't have empty slots");
+		GameServer()->SendChatLocalize(From, "Your clan don't have empty slots.");
 		return;
 	}
 
@@ -527,7 +529,7 @@ void CClanManager::ChatInviteClan(IConsole::IResult *pResult, void *pUserData)
 
 	if(ClientID == -1)
 	{
-		pThis->GameServer()->SendChatTarget(From, "Can't find player with this name");
+		pThis->GameServer()->SendChatLocalize(From, "Can't find player with this name.");
 		return;
 	}
 

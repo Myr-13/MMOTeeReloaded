@@ -89,7 +89,7 @@ bool CAccountManager::LoginThread(IDbConnection *pSqlServer, const ISqlData *pGa
 
 	char aBuf[1024];
 
-	str_copy(aBuf, "SELECT id, level, exp, money, donate, clan_id FROM users WHERE name = ? AND password = ?");
+	str_copy(aBuf, "SELECT id, level, exp, money, donate, clan_id, language FROM users WHERE name = ? AND password = ?");
 	if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		return true;
 	pSqlServer->BindString(1, pData->m_aLogin);
@@ -111,6 +111,7 @@ bool CAccountManager::LoginThread(IDbConnection *pSqlServer, const ISqlData *pGa
 	pResult->m_AccData.m_Money = pSqlServer->GetInt(4);
 	pResult->m_AccData.m_Donate = pSqlServer->GetInt(5);
 	pResult->m_AccData.m_ClanID = pSqlServer->GetInt(6);
+	pResult->m_AccData.m_Lang = pSqlServer->GetInt(7);
 	str_copy(pResult->m_AccData.m_aAccountName, pData->m_aLogin);
 
 	// Load inventory
@@ -409,7 +410,7 @@ void CAccountManager::ChatRegister(IConsole::IResult *pResult, void *pUserData)
 
 	if(pPlayer->m_LoggedIn)
 	{
-		pSelf->GameServer()->SendChatTarget(ClientID, "You already logged in!");
+		pSelf->GameServer()->SendChatLocalize(ClientID, "You already logged in!");
 		return;
 	}
 
@@ -457,7 +458,7 @@ void CAccountManager::ChatLogin(IConsole::IResult *pResult, void *pUserData)
 
 	if(pPlayer->m_LoggedIn)
 	{
-		pSelf->GameServer()->SendChatTarget(ClientID, "You already logged in!");
+		pSelf->GameServer()->SendChatLocalize(ClientID, "You already logged in!");
 		return;
 	}
 

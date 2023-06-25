@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include <cstdarg>
 #include <game/server/entities/character.h>
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
@@ -119,7 +120,7 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		int Cost = MMOCore()->GetUpgradeCost(Value1) * Count;
 		if (Cost > pPly->m_AccUp.m_UpgradePoints)
 		{
-			GameServer()->SendChatTarget(ClientID, "You don't have needed count of upgrade points");
+			GameServer()->SendChatLocalize(ClientID, "You don't have needed count of upgrade points.");
 			return;
 		}
 
@@ -171,7 +172,7 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		// Check for leader
 		if(pClan->m_LeaderID != pPly->m_AccData.m_ID)
 		{
-			GameServer()->SendChatTarget(ClientID, "Only leader can buy upgrades for clan.");
+			GameServer()->SendChatLocalize(ClientID, "Only leader can buy upgrades for clan.");
 			return;
 		}
 
@@ -180,14 +181,14 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 
 		if(pClan->m_Money < Cost)
 		{
-			GameServer()->SendChatTarget(ClientID, "Your clan don't have enought money in bank.");
+			GameServer()->SendChatLocalize(ClientID, "Your clan don't have enough money in bank.");
 			return;
 		}
 
 		pClan->m_Money -= Cost;
 		pClanUpgrade[Value1]++;
 
-		GameServer()->SendChatTarget(ClientID, "Upgrade successful!");
+		GameServer()->SendChatLocalize(ClientID, "Upgrade successful!");
 
 		RebuildMenu(ClientID);
 	}
@@ -219,7 +220,7 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		pPly->m_AccData.m_Money -= Count;
 		pClan->m_Money += Count;
 
-		GameServer()->SendChatTarget(ClientID, "Money added to clan bank.");
+		GameServer()->SendChatLocalize(ClientID, "Money added to clan bank.");
 
 		RebuildMenu(ClientID);
 	}
@@ -260,6 +261,13 @@ void CVoteMenu::AddMenuChangeVote(int ClientID, int Menu, const char *pDesc)
 	AddMenuVote(ClientID, aBuf, pDesc);
 }
 
+void CVoteMenu::AddMenuChangeVoteLocalize(int ClientID, int Menu, const char *pDesc)
+{
+	char aBuf[64];
+	str_format(aBuf, sizeof(aBuf), "set%d", Menu);
+	AddMenuVote(ClientID, aBuf, GameServer()->Localize(ClientID, pDesc));
+}
+
 void CVoteMenu::RebuildMenu(int ClientID)
 {
 	int Menu = m_aPlayersMenu[ClientID];
@@ -278,48 +286,38 @@ void CVoteMenu::RebuildMenu(int ClientID)
 	}
 	else if(Menu == MENU_MAIN)
 	{
-		AddMenuVote(ClientID, "null", "------------ Your stats");
-		char aBuf[128];
-		str_format(aBuf, sizeof(aBuf), "☪ Account: %s", pPly->m_AccData.m_aAccountName);
-		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), "ღ Level: %d", pPly->m_AccData.m_Level);
-		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), "ღ EXP: %d", pPly->m_AccData.m_EXP);
-		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), "ღ Money: %d", pPly->m_AccData.m_Money);
-		AddMenuVote(ClientID, "null", aBuf);
-		AddMenuVote(ClientID, "null", "------------ Server");
-		AddMenuChangeVote(ClientID, MENU_INFO, CLICK "Info");
-		AddMenuVote(ClientID, "null", "------------ Account menu");
-		AddMenuChangeVote(ClientID, MENU_EQUIP, CLICK "Equipment");
-		AddMenuChangeVote(ClientID, MENU_INVENTORY, CLICK "Inventory");
-		AddMenuChangeVote(ClientID, MENU_UPGRADE, CLICK "Upgrade");
+		AddMenuVoteLocalize(ClientID, "null", "------------ Your stats");
+		AddMenuVoteLocalize(ClientID, "null", "☪ Account: %s", pPly->m_AccData.m_aAccountName);
+		AddMenuVoteLocalize(ClientID, "null", "ღ Level: %d", pPly->m_AccData.m_Level);
+		AddMenuVoteLocalize(ClientID, "null", "ღ EXP: %d", pPly->m_AccData.m_EXP);
+		AddMenuVoteLocalize(ClientID, "null", "ღ Money: %d", pPly->m_AccData.m_Money);
+		AddMenuVoteLocalize(ClientID, "null", "------------ Server");
+		AddMenuChangeVoteLocalize(ClientID, MENU_INFO, "☞ Info");
+		AddMenuVoteLocalize(ClientID, "null", "------------ Account menu");
+		AddMenuChangeVoteLocalize(ClientID, MENU_EQUIP, "☞ Equipment");
+		AddMenuChangeVoteLocalize(ClientID, MENU_INVENTORY, "☞ Inventory");
+		AddMenuChangeVoteLocalize(ClientID, MENU_UPGRADE, "☞ Upgrade");
 
-		AddMenuVote(ClientID, "null", "------------ Clan menu");
+		AddMenuVoteLocalize(ClientID, "null", "------------ Clan menu");
 		if(pPly->m_AccData.m_ClanID != 0)
 		{
-			AddMenuChangeVote(ClientID, MENU_CLAN_INFO, CLICK "Info");
-			AddMenuChangeVote(ClientID, MENU_CLAN_UPGRADE, CLICK "Upgrade");
+			AddMenuChangeVoteLocalize(ClientID, MENU_CLAN_INFO, "☞ Info");
+			AddMenuChangeVoteLocalize(ClientID, MENU_CLAN_UPGRADE, "☞ Upgrade");
 		}
 		else
-			AddMenuVote(ClientID, "null", "You not in clan");
+			AddMenuVoteLocalize(ClientID, "null", "You not in clan");
 
 		if (pChr && pChr->m_InShop)
 		{
 			char aCmd[256];
 
-			AddMenuVote(ClientID, "null", "------------ Shop");
+			AddMenuVoteLocalize(ClientID, "null", "------------ Shop");
 
 			for (SShopEntry Entry : MMOCore()->GetShopItems())
 			{
-				str_format(aBuf, sizeof(aBuf), CLICK "%s",
-					MMOCore()->GetItemName(Entry.m_ID));
 				str_format(aCmd, sizeof(aCmd), "shop%d", Entry.m_ID);
-				AddMenuVote(ClientID, aCmd, aBuf);
-
-				str_format(aBuf, sizeof(aBuf), "Cost: %d | Level: %d",
-					Entry.m_Cost, Entry.m_Level);
-				AddMenuVote(ClientID, "null", aBuf);
+				AddMenuVoteLocalize(ClientID, aCmd, "☞ %s", MMOCore()->GetItemName(Entry.m_ID));
+				AddMenuVoteLocalize(ClientID, "null", "Cost: %d | Level: %d", Entry.m_Cost, Entry.m_Level);
 			}
 		}
 
@@ -331,17 +329,11 @@ void CVoteMenu::RebuildMenu(int ClientID)
 
 			for (SCraftData &Entry : MMOCore()->GetCrafts())
 			{
-				str_format(aBuf, sizeof(aBuf), CLICK "%s",
-					MMOCore()->GetItemName(Entry.m_ID));
 				str_format(aCmd, sizeof(aCmd), "craft%d", Entry.m_ID);
-				AddMenuVote(ClientID, aCmd, aBuf);
+				AddMenuVoteLocalize(ClientID, aCmd, "☞ %s", MMOCore()->GetItemName(Entry.m_ID));
 
 				for (SCraftIngredient Ingredient : Entry.m_vIngredients)
-				{
-					str_format(aBuf, sizeof(aBuf), "- %s x%d",
-						MMOCore()->GetItemName(Ingredient.m_ID), Ingredient.m_Count);
-					AddMenuVote(ClientID, "null", aBuf);
-				}
+					AddMenuVoteLocalize(ClientID, "null", "- %s x%d", MMOCore()->GetItemName(Ingredient.m_ID), Ingredient.m_Count);
 
 				AddMenuVote(ClientID, "null", "");
 			}
@@ -349,31 +341,31 @@ void CVoteMenu::RebuildMenu(int ClientID)
 	}
 	else if(Menu == MENU_INFO)
 	{
-		AddMenuVote(ClientID, "null", "------------ Info about server");
-		AddMenuVote(ClientID, "null", "Code with ♥ by Myr, based on DDNet by DDNet staff");
-		AddMenuVote(ClientID, "null", "Idea and MMOTee azataz by Kurosio");
-		AddMenuVote(ClientID, "null", "Hosted by Tee 3D");
-		AddMenuVote(ClientID, "null", "Discord: https://discord.gg/3KrNyerWtx");
+		AddMenuVoteLocalize(ClientID, "null", "------------ Info about server");
+		AddMenuVoteLocalize(ClientID, "null", "Code with ♥ by Myr, based on DDNet by DDNet staff");
+		AddMenuVoteLocalize(ClientID, "null", "Idea and MMOTee azataz by Kurosio");
+		AddMenuVoteLocalize(ClientID, "null", "Hosted by Tee 3D");
+		AddMenuVoteLocalize(ClientID, "null", "Discord: https://discord.gg/3KrNyerWtx");
 
 		AddBack(ClientID, MENU_MAIN);
 	}
 	else if(Menu == MENU_EQUIP)
 	{
-		AddMenuVote(ClientID, "null", "------------ Your equipment");
-		AddMenuVote(ClientID, "inv_list6", "Armor body"); // ITEM_TYPE_ARMOR_BODY = 6
-		AddMenuVote(ClientID, "inv_list7", "Armor feet"); // ITEM_TYPE_ARMOR_FEET = 7
+		AddMenuVoteLocalize(ClientID, "null", "------------ Your equipment");
+		AddMenuVoteLocalize(ClientID, "inv_list6", "☞ Armor body"); // ITEM_TYPE_ARMOR_BODY = 6
+		AddMenuVoteLocalize(ClientID, "inv_list7", "☞ Armor feet"); // ITEM_TYPE_ARMOR_FEET = 7
 
 		AddBack(ClientID, MENU_MAIN);
 	}
 	else if(Menu == MENU_INVENTORY)
 	{
-		AddMenuVote(ClientID, "null", "------------ Your inventory");
-		AddMenuVote(ClientID, "inv_list0", CLICK "Profession");
-		AddMenuVote(ClientID, "inv_list1", CLICK "Craft");
-		AddMenuVote(ClientID, "inv_list2", CLICK "Use");
-		AddMenuVote(ClientID, "inv_list3", CLICK "Artifact");
-		AddMenuVote(ClientID, "inv_list4", CLICK "Weapon");
-		AddMenuVote(ClientID, "inv_list5", CLICK "Other");
+		AddMenuVoteLocalize(ClientID, "null", "------------ Your inventory");
+		AddMenuVoteLocalize(ClientID, "inv_list0", "☞ Profession");
+		AddMenuVoteLocalize(ClientID, "inv_list1", "☞ Craft");
+		AddMenuVoteLocalize(ClientID, "inv_list2", "☞ Use");
+		AddMenuVoteLocalize(ClientID, "inv_list3", "☞ Artifact");
+		AddMenuVoteLocalize(ClientID, "inv_list4", "☞ Weapon");
+		AddMenuVoteLocalize(ClientID, "inv_list5", "☞ Other");
 
 		AddBack(ClientID, MENU_MAIN);
 	}
@@ -383,14 +375,12 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		char aBuf[128];
 		char aCmd[64];
 
-		str_format(aBuf, sizeof(aBuf), VALUE "Upgrade points: %d", pPly->m_AccUp.m_UpgradePoints);
-		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVoteLocalize(ClientID, "null", "► Upgrade points: %d", pPly->m_AccUp.m_UpgradePoints);
 
 		for (int i = UPGRADE_DAMAGE; i < UPGRADES_NUM; i++)
 		{
-			str_format(aBuf, sizeof(aBuf), CLICK "[%d] %s", pPly->m_AccUp[i], MMOCore()->GetUpgradeName(i));
 			str_format(aCmd, sizeof(aCmd), "upgr%d", i);
-			AddMenuVote(ClientID, aCmd, aBuf);
+			AddMenuVoteLocalize(ClientID, aCmd, "☞ [%d] %s", pPly->m_AccUp[i], MMOCore()->GetUpgradeName(i));
 		}
 
 		AddBack(ClientID, MENU_MAIN);
@@ -404,24 +394,23 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		SClanData *pClan = GameServer()->m_ClanManager.GetClan(pPly->m_AccData.m_ClanID);
 		if(!pClan)
 		{
-			AddMenuVote(ClientID, "null", "Something went wrong. Pointer to clan is null.");
-			str_format(aBuf, sizeof(aBuf), "ClanID: %d", pPly->m_AccData.m_ClanID);
-			AddMenuVote(ClientID, "null", aBuf);
+			AddMenuVoteLocalize(ClientID, "null", "Something went wrong. Pointer to clan is null.");
+			AddMenuVoteLocalize(ClientID, "null", "Contact administrator and send screenshot of this menu.");
+			AddMenuVoteLocalize(ClientID, "null", "ClanID: %d", pPly->m_AccData.m_ClanID);
+			AddMenuVoteLocalize(ClientID, "null", "AccID: %d", pPly->m_AccData.m_ID);
+			AddMenuVoteLocalize(ClientID, "null", "Location: %s, %d", __FILE__, __LINE__);
 			AddBack(ClientID, MENU_MAIN);
 
 			return;
 		}
 
-		str_format(aBuf, sizeof(aBuf), VALUE "Level: %d", pClan->m_Level);
-		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Exp: %d", pClan->m_Exp);
-		AddMenuVote(ClientID, "null", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Bank: %d", pClan->m_Money);
-		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVoteLocalize(ClientID, "null", "► Level: %d", pClan->m_Level);
+		AddMenuVoteLocalize(ClientID, "null", "► Exp: %d", pClan->m_Exp);
+		AddMenuVoteLocalize(ClientID, "null", "► Bank: %d", pClan->m_Money);
 
 		AddMenuVote(ClientID, "null", "");
-		AddMenuVote(ClientID, "cln_add_money", CLICK "Add money to bank");
-		AddMenuVote(ClientID, "null", "Reason = count");
+		AddMenuVoteLocalize(ClientID, "cln_add_money", "► Add money to bank");
+		AddMenuVoteLocalize(ClientID, "null", "Reason = count");
 		AddMenuVote(ClientID, "null", "");
 
 		AddMenuVote(ClientID, "null", "TODO: Add members list");
@@ -437,40 +426,35 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		SClanData *pClan = GameServer()->m_ClanManager.GetClan(pPly->m_AccData.m_ClanID);
 		if(!pClan)
 		{
-			AddMenuVote(ClientID, "null", "Something went wrong. Pointer to clan is null.");
-			str_format(aBuf, sizeof(aBuf), "ClanID: %d", pPly->m_AccData.m_ClanID);
-			AddMenuVote(ClientID, "null", aBuf);
+			AddMenuVoteLocalize(ClientID, "null", "Something went wrong. Pointer to clan is null.");
+			AddMenuVoteLocalize(ClientID, "null", "Contact administrator and send screenshot of this menu.");
+			AddMenuVoteLocalize(ClientID, "null", "ClanID: %d", pPly->m_AccData.m_ClanID);
+			AddMenuVoteLocalize(ClientID, "null", "AccID: %d", pPly->m_AccData.m_ID);
+			AddMenuVoteLocalize(ClientID, "null", "Location: %s, %d", __FILE__, __LINE__);
 			AddBack(ClientID, MENU_MAIN);
 
 			return;
 		}
 
-		str_format(aBuf, sizeof(aBuf), VALUE "Bank: %d", pClan->m_Money);
-		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVoteLocalize(ClientID, "null", "► Bank: %d", pClan->m_Money);
 		AddMenuVote(ClientID, "null", "");
 
 		CClanManager *pClanMgr = &GameServer()->m_ClanManager;
 
-		str_format(aBuf, sizeof(aBuf), CLICK "Max number of members: %d", pClan->m_MaxNum);
-		AddMenuVote(ClientID, "cln_upgr_0", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_MAX_NUMBER, pClan->m_MaxNum));
-		AddMenuVote(ClientID, "null", aBuf);
+		AddMenuVoteLocalize(ClientID, "cln_upgr_0", "☞ Max number of members: %d", pClan->m_MaxNum);
+		AddMenuVoteLocalize(ClientID, "null", "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_MAX_NUMBER, pClan->m_MaxNum));
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), CLICK "Add money: %d", pClan->m_MoneyAdd);
-		AddMenuVote(ClientID, "cln_upgr_1", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_MONEY, pClan->m_MoneyAdd));
-		AddMenuVote(ClientID, "null", aBuf);
-		AddMenuVote(ClientID, "null", "Additional money for all members");
+		AddMenuVoteLocalize(ClientID, "cln_upgr_1", "☞ Add money: %d", pClan->m_MoneyAdd);
+		AddMenuVoteLocalize(ClientID, "null", "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_MONEY, pClan->m_MoneyAdd));
+		AddMenuVoteLocalize(ClientID, "null", "Additional money for all members");
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), CLICK "Add exp: %d", pClan->m_ExpAdd);
-		AddMenuVote(ClientID, "cln_upgr_2", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_EXP, pClan->m_ExpAdd));
-		AddMenuVote(ClientID, "null", aBuf);
-		AddMenuVote(ClientID, "null", "Additional exp for all members");
+		AddMenuVoteLocalize(ClientID, "cln_upgr_2", "☞ Add exp: %d", pClan->m_ExpAdd);
+		AddMenuVoteLocalize(ClientID, "null", "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_ADD_EXP, pClan->m_ExpAdd));
+		AddMenuVoteLocalize(ClientID, "null", "Additional exp for all members");
 
 		AddMenuVote(ClientID, "null", "");
 
@@ -585,4 +569,30 @@ void CVoteMenu::ItemInfo(int ClientID, int ItemID)
 void CVoteMenu::ListCrafts(int ClientID, int Type)
 {
 
+}
+
+void CVoteMenu::AddMenuVoteLocalize(int ClientID, const char *pCmd, const char *pDesc, ...)
+{
+	char aBuf[512];
+	const char *pFormat = GameServer()->Localize(ClientID, pDesc);
+
+#if defined(CONF_FAMILY_WINDOWS)
+	va_list ap;
+	va_start(ap, pDesc);
+	_vsprintf_p(aBuf, sizeof(aBuf), pFormat, ap);
+	va_end(ap);
+
+	aBuf[sizeof(aBuf) - 1] = 0; /* assure null termination */
+#else
+	va_list ap;
+	va_start(ap, pDesc);
+	vsnprintf(aBuf, sizeof(aBuf), pFormat, ap);
+	va_end(ap);
+
+	/* null termination is assured by definition of vsnprintf */
+#endif
+
+	str_utf8_fix_truncation(aBuf);
+
+	AddMenuVote(ClientID, pCmd, aBuf);
 }

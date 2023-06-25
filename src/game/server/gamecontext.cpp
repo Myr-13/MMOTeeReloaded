@@ -3086,11 +3086,15 @@ void CGameContext::OnInit()
 								&m_AccountManager,
 								&m_VoteMenu,
 								&m_AdminCommands,
-								&m_ClanManager
+								&m_ClanManager,
+							    	&m_Localization
 	});
 
 	for(auto &pComponent : m_vpComponents)
 		pComponent->m_pGameServer = this;
+
+	for(auto &pComponent : m_vpComponents)
+		pComponent->OnInit();
 
 	for(auto &pComponent : m_vpComponents)
 		pComponent->OnConsoleInit();
@@ -4001,4 +4005,74 @@ void CGameContext::SendMMOBroadcast(int ClientID, float Seconds, const char *pTe
 {
 	m_aClientsBroadcast[ClientID].m_EndTick = Server()->Tick() + (int)(Server()->TickSpeed() * Seconds);
 	str_copy(m_aClientsBroadcast[ClientID].m_aText, pText);
+}
+
+const char *CGameContext::Localize(int ClientID, const char *pText)
+{
+	CPlayer *pPly = m_apPlayers[ClientID];
+	if(!pPly)
+		return pText;
+	if(!pPly->m_LoggedIn)
+		return pText;
+
+	int Lang = pPly->m_AccData.m_Lang;
+
+	return m_Localization.Localize(Lang, pText);
+}
+
+void CGameContext::SendChatLocalize(int ClientID, const char *pText, ...)
+{
+	if(ClientID >= 0)
+	{
+		char aBuf[1024];
+		const char *pFormat = Localize(ClientID, pText);
+
+#if defined(CONF_FAMILY_WINDOWS)
+		va_list ap;
+		va_start(ap, pText);
+		_vsprintf_p(aBuf, sizeof(aBuf), pFormat, ap);
+		va_end(ap);
+
+		aBuf[sizeof(aBuf) - 1] = 0; /* assure null termination */
+#else
+		va_list ap;
+		va_start(ap, pText);
+		vsnprintf(aBuf, sizeof(aBuf), pFormat, ap);
+		va_end(ap);
+
+		/* null termination is assured by definition of vsnprintf */
+#endif
+
+		str_utf8_fix_truncation(aBuf);
+
+		SendChatTarget(ClientID, aBuf);
+	}
+	else
+	{
+		for(int i = 0; i < MAX_PLAYERS; i++)
+		{
+			char aBuf[1024];
+			const char *pFormat = Localize(i, pText);
+
+#if defined(CONF_FAMILY_WINDOWS)
+			va_list ap;
+			va_start(ap, pText);
+			_vsprintf_p(aBuf, sizeof(aBuf), pFormat, ap);
+			va_end(ap);
+
+			aBuf[sizeof(aBuf) - 1] = 0; /* assure null termination */
+#else
+			va_list ap;
+			va_start(ap, pText);
+			vsnprintf(aBuf, sizeof(aBuf), pFormat, ap);
+			va_end(ap);
+
+			/* null termination is assured by definition of vsnprintf */
+#endif
+
+			str_utf8_fix_truncation(aBuf);
+
+			SendChatTarget(i, aBuf);
+		}
+	}
 }

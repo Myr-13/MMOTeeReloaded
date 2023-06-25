@@ -24,6 +24,7 @@
 #include "mmo/components/vote_menu.h"
 #include "mmo/components/admin_commands.h"
 #include "mmo/components/clan_manager.h"
+#include "mmo/components/localization.h"
 
 #include "mmo/mmo_core.h"
 
@@ -492,10 +493,13 @@ public:
 	CVoteMenu m_VoteMenu;
 	CAdminCommands m_AdminCommands;
 	CClanManager m_ClanManager;
+	CLocalization m_Localization;
 
 	CMMOCore m_MMOCore;
 
 	void SendMMOBroadcast(int ClientID, float Seconds, const char *pText);
+	const char *Localize(int ClientID, const char *pText);
+	void SendChatLocalize(int ClientID, const char *pText, ...);
 
 private:
 	void CreateEntitiesMMO();

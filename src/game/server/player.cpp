@@ -857,7 +857,7 @@ void CPlayer::AddEXP(int EXP, bool NoBonus)
 		m_AccData.m_EXP -= NeedEXP;
 		m_AccData.m_Level++;
 
-		GameServer()->SendChatTarget(m_ClientID, "[LEVEL UP!] You got 2 skill points and 1 class point.");
+		GameServer()->SendChatLocalize(m_ClientID, "[LEVEL UP!] You got 2 skill points and 1 class point.");
 
 		m_AccUp.m_UpgradePoints += 2;
 		m_AccUp.m_SkillPoints++;

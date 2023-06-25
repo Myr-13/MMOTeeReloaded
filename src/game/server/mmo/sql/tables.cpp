@@ -36,6 +36,7 @@ void IDbConnection::FormatCreateAccounts(char *aBuf, unsigned int BufferSize)
 		"  money INTEGER DEFAULT 0, "
 		"  donate INTEGER DEFAULT 0, "
 		"  clan_id INTEGER DEFAULT 0, "
+		"  language INTEGER DEFAULT 0, "
 		"  create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
 		")",
 		MAX_LOGIN_LENGTH, MD5_MAXSTRSIZE);

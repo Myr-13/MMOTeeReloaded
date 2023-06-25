@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Localization>
+    <!-- Lang IDs -->
+    <!-- 0 - EN -->
+    <!-- 1 - RU -->
+    <!-- 2 - UA -->
+    <!-- 3 - GR -->
+    <!-- 4 - TR -->
+
+    <!-- EN -->
+    <Language ID="0">
+        <File Path="english.xml"/>
+    </Language>
+
+    <!-- RU -->
+    <Language ID="1">
+        <File Path="russian.xml"/>
+    </Language>
+</Localization>

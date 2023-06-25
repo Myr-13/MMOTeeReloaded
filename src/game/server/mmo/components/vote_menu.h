@@ -39,7 +39,9 @@ public:
 	void SetMenu(int ClientID, int MenuID) { m_aPlayersMenu[ClientID] = MenuID; };
 
 	void AddMenuVote(int ClientID, const char *pCmd, const char *pDesc);
+	void AddMenuVoteLocalize(int ClientID, const char *pCmd, const char *pDesc, ...);
 	void AddMenuChangeVote(int ClientID, int Menu, const char *pDesc);
+	void AddMenuChangeVoteLocalize(int ClientID, int Menu, const char *pDesc);
 	void ClearVotes(int ClientID);
 	void RebuildMenu(int ClientID);
 	void AddBack(int ClientID, int Menu);

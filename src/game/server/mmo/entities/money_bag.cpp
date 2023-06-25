@@ -27,10 +27,7 @@ void CMoneyBag::Tick()
 		int Bonus = (Server()->Tick() - m_RespawnTick) / (60 * 60);
 		int ClientID = pChr->GetPlayer()->GetCID();
 
-		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "%s found Secret Bag! Got %d + Time %d Money Bag!",
-			Server()->ClientName(ClientID), Count, Bonus);
-		GameServer()->SendChatTarget(-1, aBuf);
+		GameServer()->SendChatLocalize(-1, "%s found Secret Bag! Got %d + Time %d Money Bag!", Server()->ClientName(ClientID), Count, Bonus);
 
 		m_RespawnTick = Server()->Tick() + Server()->TickSpeed() * (rand() % 300 + 60 * 5);
 

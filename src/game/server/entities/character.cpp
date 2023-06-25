@@ -2093,9 +2093,8 @@ void CCharacter::HandleMMOTiles(int Tile)
 			int Money = MaterialCount / 10;
 			m_pPlayer->m_AccInv.RemItem(ITEM_MATERIAL);
 			m_pPlayer->AddMoney(Money, true);
-			char aBuf[256];
-			str_format(aBuf, sizeof(aBuf), "You have sold %d materials for %d money", MaterialCount, Money);
-			GameServer()->SendChatTarget(ClientID, aBuf);
+
+			GameServer()->SendChatLocalize(ClientID, "You have sold %d materials for %d money.", MaterialCount, Money);
 		}
 	}
 	else if (Tile == TILE_SHOP_OFF && m_InShop)

@@ -25,6 +25,7 @@ struct SAccountData
 	int m_Money;
 	int m_Donate;
 	int m_ClanID;
+	int m_Lang;
 };
 
 struct SWorkData

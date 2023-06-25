@@ -107,8 +107,7 @@ void CPickupJob::Damage(int ClientID)
 		else if (m_Type == PICKUP_JOB_TYPE_MATERIAL)
 		{
 			if (!MMOCore()->GiveItem(ClientID, ITEM_MATERIAL, 25 + pPly->m_AccWorks.m_aWorks[WorkID].m_Level * 3)) {
-				str_format(aBuf, sizeof(aBuf), "You have reached the maximum amount of materials. Go sell them in a shop!");
-				GameServer()->SendChatTarget(ClientID, aBuf);
+				GameServer()->SendChatLocalize(ClientID, "You have reached the maximum amount of materials. Go sell them in a shop!");
 				return;
 			}
 		}
@@ -117,8 +116,7 @@ void CPickupJob::Damage(int ClientID)
 		if (WorkID != -1)
 		{
 			pPly->AddWorkEXP(WorkID, GainXP);
-			str_format(aBuf, sizeof(aBuf), "+%d %s work exp", GainXP, MMOCore()->GetWorkName(WorkID));
-			GameServer()->SendChatTarget(ClientID, aBuf);
+			GameServer()->SendChatLocalize(ClientID, "+%d %s work exp", GainXP, MMOCore()->GetWorkName(WorkID));
 		}
 	}
 

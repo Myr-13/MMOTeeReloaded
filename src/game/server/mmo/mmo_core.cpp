@@ -388,9 +388,7 @@ bool CMMOCore::GiveItem(int ClientID, int ItemID, int Count, int Quality, int Da
 	}
 	pPly->m_AccInv.AddItem(Item);
 
-	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "+%s x%d", GetItemName(ItemID), Count);
-	GameServer()->SendChatTarget(ClientID, aBuf);
+	GameServer()->SendChatLocalize(ClientID, "+%s x%d", GetItemName(ItemID), Count);
 	return true;
 }
 
@@ -464,20 +462,17 @@ void CMMOCore::UseItem(int ClientID, int ItemID, int Count)
 			pPly->m_AccUp[i] = 0;
 		}
 		pPly->m_AccUp.m_UpgradePoints = UpgradePoints;
-		char aBuf[256] = "You've reset your upgrade points";
-		GameServer()->SendChatTarget(pPly->GetCID(), aBuf);
+
+		GameServer()->SendChatLocalize(pPly->GetCID(), "You've reset your upgrade points.");
 		break;
 	}
 	}
 
 	// Notify clients
-	char aResultText[256] = {'\0'};
 	if (ItemID >= ITEM_CARROT && ItemID <= ITEM_TOMATO)
-		str_format(aResultText, sizeof(aResultText), "%s used %s x%d and got %d exp", Server()->ClientName(ClientID), GetItemName(ItemID), Count, Value);
+		GameServer()->SendChatLocalize(-1, "%s used %s x%d and got %d exp.", Server()->ClientName(ClientID), GetItemName(ItemID), Count, Value);
 	else if (ItemID == ITEM_MONEY_BAG)
-		str_format(aResultText, sizeof(aResultText), "%s used %s x%d and got %d money", Server()->ClientName(ClientID), GetItemName(ItemID), Count, Value);
-
-	GameServer()->SendChatTarget(-1, aResultText);
+		GameServer()->SendChatLocalize(-1, "%s used %s x%d and got %d money.", Server()->ClientName(ClientID), GetItemName(ItemID), Count, Value);
 
 	// Delete items from inventory
 	pPly->m_AccInv.RemItem(ItemID, Count);
@@ -502,14 +497,14 @@ void CMMOCore::BuyItem(int ClientID, int ItemID)
 	// Check for level
 	if (pPly->m_AccData.m_Level < it->m_Level)
 	{
-		GameServer()->SendChatTarget(ClientID, "You don't have needed level");
+		GameServer()->SendChatLocalize(ClientID, "You don't have needed level.");
 		return;
 	}
 
 	// Check for money
 	if (pPly->m_AccData.m_Money < it->m_Cost)
 	{
-		GameServer()->SendChatTarget(ClientID, "You don't have needed money");
+		GameServer()->SendChatLocalize(ClientID, "You don't have needed money.");
 		return;
 	}
 
@@ -689,9 +684,7 @@ int CMMOCore::GetPlusDamage(int ClientID)
 		PlusDamage *= 1.5f;
 		PlusDamage += pPly->m_AccInv.ItemCount(ITEM_RARE_HAMMER);
 
-		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "♦ Crit damage: %d", PlusDamage);
-		GameServer()->SendChatTarget(ClientID, aBuf);
+		GameServer()->SendChatLocalize(ClientID, "♦ Crit damage: %d", PlusDamage);
 	}
 
 	return PlusDamage;
@@ -772,7 +765,7 @@ void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)
 	{
 		if (pPly->m_AccInv.ItemCount(Ingredient.m_ID) < Ingredient.m_Count * Count)
 		{
-			GameServer()->SendChatTarget(ClientID, "You don't have needed items");
+			GameServer()->SendChatLocalize(ClientID, "You don't have needed items.");
 			return;
 		}
 	}
