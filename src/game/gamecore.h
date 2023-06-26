@@ -243,15 +243,6 @@ public:
 	void SetHookedPlayer(int HookedPlayer);
 	bool m_Alive;
 
-	int m_ActiveWeapon;
-	struct WeaponStat
-	{
-		int m_AmmoRegenStart;
-		int m_Ammo;
-		int m_MaxAmmo;
-		bool m_Got;
-	} m_aWeapons[NUM_WEAPONS];
-
 	// ninja
 	struct
 	{
@@ -298,7 +289,6 @@ public:
 	void SetTeleOuts(std::map<int, std::vector<vec2>> *pTeleOuts);
 	void ReadDDNet(const CNetObj_DDNetCharacter *pObjDDNet);
 	bool m_Solo;
-	bool m_Jetpack;
 	bool m_CollisionDisabled;
 	bool m_EndlessHook;
 	bool m_EndlessJump;

@@ -4,6 +4,11 @@
 class CGameContext;
 class CCharacter;
 
+enum
+{
+	MMO_WEAPON_HAMMER
+};
+
 class CWeaponBase
 {
 protected:
@@ -22,7 +27,12 @@ protected:
 
 public:
 	virtual ~CWeaponBase() = default;
-	virtual int GetSnappingWeapon();
+	virtual int SnappingWeapon() = 0;
+	virtual const char *WeaponName() = 0;
+	virtual bool AutoFire() = 0;
+	virtual bool WillFire() = 0;
+	virtual float FireDelay() = 0;
+	virtual int WeaponID() = 0;
 
 	/**
 	 * Called on weapon initiation(weapon was given to player).

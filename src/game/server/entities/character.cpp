@@ -19,6 +19,7 @@
 #include <game/server/mmo/dummies/dummy_base.h>
 #include <game/server/mmo/entities/pickup_job.h>
 #include <game/server/mmo/entities/pickup_phys.h>
+#include <game/server/mmo/weapons/hammer.h>
 
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
@@ -43,6 +44,9 @@ CCharacter::CCharacter(CGameWorld *pWorld, CNetObj_PlayerInput LastInput) :
 	{
 		CurrentTimeCp = 0.0f;
 	}
+
+	for(auto &pWeapon : m_apWeapons)
+		pWeapon = 0x0;
 }
 
 void CCharacter::Reset()
@@ -75,7 +79,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, Collision());
-	m_Core.m_ActiveWeapon = WEAPON_GUN;
+	m_ActiveWeapon = 0;
 	m_Core.m_Pos = m_Pos;
 	m_Core.m_Id = m_pPlayer->GetCID();
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
@@ -120,25 +124,23 @@ void CCharacter::Destroy()
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
 	m_Alive = false;
 	SetSolo(false);
+
+	for(auto &pWeapon : m_apWeapons)
+		delete pWeapon;
 }
 
 void CCharacter::SetWeapon(int W)
 {
-	if(W == m_Core.m_ActiveWeapon)
+	if(W == m_ActiveWeapon)
 		return;
 
-	m_LastWeapon = m_Core.m_ActiveWeapon;
+	m_LastWeapon = m_ActiveWeapon;
 	m_QueuedWeapon = -1;
-	m_Core.m_ActiveWeapon = W;
+	m_ActiveWeapon = W;
 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_SWITCH, TeamMask());
 
-	if(m_Core.m_ActiveWeapon < 0 || m_Core.m_ActiveWeapon >= NUM_WEAPONS)
-		m_Core.m_ActiveWeapon = 0;
-}
-
-void CCharacter::SetJetpack(bool Active)
-{
-	m_Core.m_Jetpack = Active;
+	if(m_ActiveWeapon < 0 || m_ActiveWeapon >= MAX_WEAPONS)
+		m_ActiveWeapon = 0;
 }
 
 void CCharacter::SetSolo(bool Solo)
@@ -190,132 +192,10 @@ bool CCharacter::IsGrounded()
 	return (MoveRestrictionsBelow & CANTMOVE_DOWN) != 0;
 }
 
-void CCharacter::HandleJetpack()
-{
-	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
-
-	bool FullAuto = false;
-	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_LASER)
-		FullAuto = true;
-	if(m_Core.m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
-		FullAuto = true;
-
-	// check if we're going to fire
-	bool WillFire = false;
-	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
-		WillFire = true;
-
-	if(FullAuto && (m_LatestInput.m_Fire & 1) && m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
-		WillFire = true;
-
-	if(!WillFire)
-		return;
-
-	// check for ammo
-	if(!m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo || m_FreezeTime)
-	{
-		return;
-	}
-}
-
-void CCharacter::HandleNinja()
-{
-	if(m_Core.m_ActiveWeapon != WEAPON_NINJA)
-		return;
-
-	if((Server()->Tick() - m_Core.m_Ninja.m_ActivationTick) > (g_pData->m_Weapons.m_Ninja.m_Duration * Server()->TickSpeed() / 1000))
-	{
-		// time's up, return
-		RemoveNinja();
-		return;
-	}
-
-	int NinjaTime = m_Core.m_Ninja.m_ActivationTick + (g_pData->m_Weapons.m_Ninja.m_Duration * Server()->TickSpeed() / 1000) - Server()->Tick();
-
-	if(NinjaTime % Server()->TickSpeed() == 0 && NinjaTime / Server()->TickSpeed() <= 5)
-	{
-		GameServer()->CreateDamageInd(m_Pos, 0, NinjaTime / Server()->TickSpeed(), TeamMask() & GameServer()->ClientsMaskExcludeClientVersionAndHigher(VERSION_DDNET_NEW_HUD));
-	}
-
-	m_Armor = clamp(10 - (NinjaTime / 15), 0, 10);
-
-	// force ninja Weapon
-	SetWeapon(WEAPON_NINJA);
-
-	m_Core.m_Ninja.m_CurrentMoveTime--;
-
-	if(m_Core.m_Ninja.m_CurrentMoveTime == 0)
-	{
-		// reset velocity
-		m_Core.m_Vel = m_Core.m_Ninja.m_ActivationDir * m_Core.m_Ninja.m_OldVelAmount;
-	}
-
-	if(m_Core.m_Ninja.m_CurrentMoveTime > 0)
-	{
-		// Set velocity
-		m_Core.m_Vel = m_Core.m_Ninja.m_ActivationDir * g_pData->m_Weapons.m_Ninja.m_Velocity;
-		vec2 OldPos = m_Pos;
-		Collision()->MoveBox(&m_Core.m_Pos, &m_Core.m_Vel, vec2(GetProximityRadius(), GetProximityRadius()), 0.f);
-
-		// reset velocity so the client doesn't predict stuff
-		m_Core.m_Vel = vec2(0.f, 0.f);
-
-		// check if we Hit anything along the way
-		{
-			CEntity *apEnts[MAX_CLIENTS];
-			float Radius = GetProximityRadius() * 2.0f;
-			int Num = GameServer()->m_World.FindEntities(OldPos, Radius, apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-
-			// check that we're not in solo part
-			if(Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
-				return;
-
-			for(int i = 0; i < Num; ++i)
-			{
-				auto *pChr = static_cast<CCharacter *>(apEnts[i]);
-				if(pChr == this)
-					continue;
-
-				// Don't hit players in other teams
-				if(Team() != pChr->Team())
-					continue;
-
-				// Don't hit players in solo parts
-				if(Teams()->m_Core.GetSolo(pChr->m_pPlayer->GetCID()))
-					return;
-
-				// make sure we haven't Hit this object before
-				bool bAlreadyHit = false;
-				for(int j = 0; j < m_NumObjectsHit; j++)
-				{
-					if(m_apHitObjects[j] == pChr)
-						bAlreadyHit = true;
-				}
-				if(bAlreadyHit)
-					continue;
-
-				// check so we are sufficiently close
-				if(distance(pChr->m_Pos, m_Pos) > (GetProximityRadius() * 2.0f))
-					continue;
-
-				// Hit a player, give them damage and stuffs...
-				GameServer()->CreateSound(pChr->m_Pos, SOUND_NINJA_HIT, TeamMask());
-				// set his velocity to fast upward (for now)
-				if(m_NumObjectsHit < 10)
-					m_apHitObjects[m_NumObjectsHit++] = pChr;
-
-				pChr->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
-			}
-		}
-
-		return;
-	}
-}
-
 void CCharacter::DoWeaponSwitch()
 {
 	// make sure we can switch
-	if(m_ReloadTimer != 0 || m_QueuedWeapon == -1 || m_Core.m_aWeapons[WEAPON_NINJA].m_Got || !m_Core.m_aWeapons[m_QueuedWeapon].m_Got)
+	if(m_ReloadTimer != 0 || m_QueuedWeapon == -1 || !m_apWeapons[m_QueuedWeapon])
 		return;
 
 	// switch Weapon
@@ -324,13 +204,13 @@ void CCharacter::DoWeaponSwitch()
 
 void CCharacter::HandleWeaponSwitch()
 {
-	int WantedWeapon = m_Core.m_ActiveWeapon;
+	int WantedWeapon = m_ActiveWeapon;
 	if(m_QueuedWeapon != -1)
 		WantedWeapon = m_QueuedWeapon;
 
 	bool Anything = false;
-	for(int i = 0; i < NUM_WEAPONS - 1; ++i)
-		if(m_Core.m_aWeapons[i].m_Got)
+	for(auto &pWeapon : m_apWeapons)
+		if(pWeapon)
 			Anything = true;
 	if(!Anything)
 		return;
@@ -342,8 +222,8 @@ void CCharacter::HandleWeaponSwitch()
 	{
 		while(Next) // Next Weapon selection
 		{
-			WantedWeapon = (WantedWeapon + 1) % NUM_WEAPONS;
-			if(m_Core.m_aWeapons[WantedWeapon].m_Got)
+			WantedWeapon = (WantedWeapon + 1) % MAX_WEAPONS;
+			if(m_apWeapons[WantedWeapon])
 				Next--;
 		}
 	}
@@ -352,8 +232,8 @@ void CCharacter::HandleWeaponSwitch()
 	{
 		while(Prev) // Prev Weapon selection
 		{
-			WantedWeapon = (WantedWeapon - 1) < 0 ? NUM_WEAPONS - 1 : WantedWeapon - 1;
-			if(m_Core.m_aWeapons[WantedWeapon].m_Got)
+			WantedWeapon = (WantedWeapon - 1) < 0 ? MAX_WEAPONS - 1 : WantedWeapon - 1;
+			if(m_apWeapons[WantedWeapon])
 				Prev--;
 		}
 	}
@@ -363,7 +243,7 @@ void CCharacter::HandleWeaponSwitch()
 		WantedWeapon = m_Input.m_WantedWeapon - 1;
 
 	// check for insane values
-	if(WantedWeapon >= 0 && WantedWeapon < NUM_WEAPONS && WantedWeapon != m_Core.m_ActiveWeapon && m_Core.m_aWeapons[WantedWeapon].m_Got)
+	if(WantedWeapon >= 0 && WantedWeapon < MAX_WEAPONS && WantedWeapon != m_ActiveWeapon && m_apWeapons[WantedWeapon])
 		m_QueuedWeapon = WantedWeapon;
 
 	DoWeaponSwitch();
@@ -378,29 +258,15 @@ void CCharacter::FireWeapon()
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
 	bool FullAuto = false;
-	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_LASER)
+	if(m_apWeapons[m_ActiveWeapon]->AutoFire())
 		FullAuto = true;
-	if(m_Core.m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
-		FullAuto = true;
-	if(m_Core.m_ActiveWeapon == WEAPON_HAMMER && m_pPlayer->m_AccInv.HaveItem(ITEM_AUTO_HAMMER))
-		FullAuto = true;
-	if(m_Core.m_ActiveWeapon == WEAPON_GUN && m_pPlayer->m_AccInv.HaveItem(ITEM_AUTO_GUN))
-		FullAuto = true;
-	// allow firing directly after coming out of freeze or being unfrozen
-	// by something
-	if(m_FrozenLastTick)
-		FullAuto = true;
-
-	// don't fire hammer when player is deep and sv_deepfly is disabled
-	if(!g_Config.m_SvDeepfly && m_Core.m_ActiveWeapon == WEAPON_HAMMER && m_Core.m_DeepFrozen)
-		return;
 
 	// check if we're going to fire
 	bool WillFire = false;
 	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
 		WillFire = true;
 
-	if(FullAuto && (m_LatestInput.m_Fire & 1) && m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	if(FullAuto && (m_LatestInput.m_Fire & 1) && m_apWeapons[m_ActiveWeapon]->WillFire())
 		WillFire = true;
 
 	if(!WillFire)
@@ -417,286 +283,21 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	// check for ammo
-	if(!m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
-	{
-		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
-
-		float FireDelay;
-		GameServer()->Tuning()->Get(38 + m_Core.m_ActiveWeapon, &FireDelay);
-
-		float Mul = 30;
-		switch(m_Core.m_ActiveWeapon)
-		{
-		case WEAPON_GRENADE: Mul = 17; break;
-		case WEAPON_HAMMER: Mul = 2; break;
-		case WEAPON_GUN: Mul = 1; break;
-		case WEAPON_SHOTGUN: Mul = 10; break;
-		}
-
-		FireDelay -= m_pPlayer->m_AccUp.m_FireSpeed * Mul;
-		FireDelay = fmax(FireDelay, 0);
-		m_ReloadTimer = FireDelay * Server()->TickSpeed() / 1000;
-
-		return;
-	}
-
 	vec2 ProjStartPos = m_Pos + Direction * GetProximityRadius() * 0.75f;
-
-	// Handle weapon fire
-	int Weapon = m_Core.m_ActiveWeapon;
-	if (Weapon == WEAPON_GUN ||
-		Weapon == WEAPON_SHOTGUN ||
-		Weapon == WEAPON_GRENADE)
-	{
-		// Get lifetime
-		int LifeTime;
-		if (Weapon == WEAPON_GUN)
-			LifeTime = Server()->TickSpeed() * GameServer()->Tuning()->m_GunLifetime;
-		else if (Weapon == WEAPON_SHOTGUN)
-			LifeTime = Server()->TickSpeed() * GameServer()->Tuning()->m_ShotgunLifetime;
-		else
-			LifeTime = Server()->TickSpeed() * GameServer()->Tuning()->m_GrenadeLifetime;
-
-		const float Fov = 60.f;
-		int Spray = m_pPlayer->m_AccUp.m_Spray + 1 + ((Weapon == WEAPON_SHOTGUN) ? 5 : 0);
-
-		// Spread
-		const float fovRad = (Fov / 2.f) * pi / 180.f;
-		const float aps = fovRad / Spray * 2;
-		const float a = angle(Direction);
-
-		for (int i = 1; i <= Spray; i++) {
-			float m = (i % 2 == 0) ? -1 : 1;
-			float a1 = a + aps * (i / 2) * m;
-			vec2 dir = direction(a1);
-
-			new CProjectile(
-				GameWorld(),
-				Weapon, // Type
-				m_pPlayer->GetCID(), // Owner
-				ProjStartPos, // Pos
-				dir, // Dir
-				LifeTime, // Span
-				false, // Freeze
-				(Weapon == WEAPON_GRENADE), // Explosive
-				-1, // SoundImpact
-				m_pPlayer->m_AccInv.HaveItem(ITEM_BIG_BOOM)
-			);
-
-			if (Weapon == WEAPON_SHOTGUN && m_pPlayer->m_AccInv.HaveItem(ITEM_SGUN))
-			{
-				new CProjectile(
-					GameWorld(),
-					WEAPON_GUN, // Type
-					m_pPlayer->GetCID(), // Owner
-					ProjStartPos, // Pos
-					dir, // Dir
-					LifeTime, // Span
-					false, // Freeze
-					false, // Explosive
-					-1 // SoundImpact
-				);
-			}
-		}
-
-		// Make a sound :O
-		if (Weapon == WEAPON_GUN)
-			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
-		else if (Weapon == WEAPON_SHOTGUN)
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
-		else if (Weapon == WEAPON_GRENADE)
-			GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
-	}
-
-	switch(Weapon)
-	{
-	case WEAPON_HAMMER:
-	{
-		// Check farming
-		CPickupJob *pPickup = (CPickupJob *)GameWorld()->ClosestEntity(m_Pos, 30.f, CGameWorld::ENTTYPE_PICKUP_JOB);
-		if (pPickup && pPickup->m_State != 0)
-		{
-			pPickup->Damage(m_pPlayer->GetCID());
-			m_ReloadTimer = Server()->TickSpeed();
-			return;
-		}
-
-		// Check pickup items
-		CPickupPhys *pPickupPhys = (CPickupPhys *)GameWorld()->ClosestEntity(m_Pos, 30.f, CGameWorld::ENTTYPE_PICKUP_PHYS);
-		if (pPickupPhys && pPickupPhys->m_Type == PICKUP_PHYS_TYPE_ITEM)
-		{
-			MMOCore()->GiveItem(GetPlayer()->GetCID(), pPickupPhys->m_ItemID, pPickupPhys->m_Count);
-			pPickupPhys->Destroy();
-
-			m_ReloadTimer = Server()->TickSpeed();
-			return;
-		}
-
-		// reset objects Hit
-		m_NumObjectsHit = 0;
-		GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE, TeamMask());
-
-		if(m_Core.m_HammerHitDisabled)
-			break;
-
-		CEntity *apEnts[MAX_CLIENTS];
-		int Hits = 0;
-		int Num = GameServer()->m_World.FindEntities(ProjStartPos, GetProximityRadius() * 0.5f, apEnts,
-			MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-
-		for(int i = 0; i < Num; ++i)
-		{
-			auto *pTarget = static_cast<CCharacter *>(apEnts[i]);
-
-			//if ((pTarget == this) || Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
-			if((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
-				continue;
-
-			// set his velocity to fast upward (for now)
-			if(length(pTarget->m_Pos - ProjStartPos) > 0.0f)
-				GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * GetProximityRadius() * 0.5f, TeamMask());
-			else
-				GameServer()->CreateHammerHit(ProjStartPos, TeamMask());
-
-			vec2 Dir;
-			if(length(pTarget->m_Pos - m_Pos) > 0.0f)
-				Dir = normalize(pTarget->m_Pos - m_Pos);
-			else
-				Dir = vec2(0.f, -1.f);
-
-			float Strength;
-			if(!m_TuneZone)
-				Strength = GameServer()->Tuning()->m_HammerStrength;
-			else
-				Strength = GameServer()->TuningList()[m_TuneZone].m_HammerStrength;
-
-			vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
-			Temp = ClampVel(pTarget->m_MoveRestrictions, Temp);
-			Temp -= pTarget->m_Core.m_Vel;
-			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, 3,
-				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
-
-			if(m_FreezeHammer)
-				pTarget->Freeze();
-
-			Hits++;
-		}
-
-		Num = GameServer()->m_World.FindEntities(ProjStartPos, GetProximityRadius(), apEnts,
-			MAX_CLIENTS, CGameWorld::ENTTYPE_DUMMY);
-
-		for(int i = 0; i < Num; ++i)
-		{
-			auto *pTarget = static_cast<CDummyBase *>(apEnts[i]);
-
-			if(!pTarget->IsAlive())
-				continue;
-
-			// set his velocity to fast upward (for now)
-			if(length(pTarget->m_Pos - ProjStartPos) > 0.0f)
-				GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * GetProximityRadius() * 0.5f, TeamMask());
-			else
-				GameServer()->CreateHammerHit(ProjStartPos, TeamMask());
-
-			vec2 Dir;
-			if(length(pTarget->m_Pos - m_Pos) > 0.0f)
-				Dir = normalize(pTarget->m_Pos - m_Pos);
-			else
-				Dir = vec2(0.f, -1.f);
-
-			float Strength;
-			if(!m_TuneZone)
-				Strength = GameServer()->Tuning()->m_HammerStrength;
-			else
-				Strength = GameServer()->TuningList()[m_TuneZone].m_HammerStrength;
-
-			vec2 Temp = pTarget->Core()->m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
-			//Temp = ClampVel(pTarget->m_MoveRestrictions, Temp);
-			Temp -= pTarget->Core()->m_Vel;
-			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, 3,
-				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
-
-			Hits++;
-		}
-
-		// if we Hit anything, we have to wait for to reload
-		if(Hits)
-		{
-			float FireDelay;
-			if(!m_TuneZone)
-				FireDelay = GameServer()->Tuning()->m_HammerHitFireDelay;
-			else
-				FireDelay = GameServer()->TuningList()[m_TuneZone].m_HammerHitFireDelay;
-			m_ReloadTimer = FireDelay * Server()->TickSpeed() / 1000;
-		}
-	}
-	break;
-
-	case WEAPON_LASER:
-	{
-		float LaserReach;
-		if(!m_TuneZone)
-			LaserReach = GameServer()->Tuning()->m_LaserReach;
-		else
-			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
-
-		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
-		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, TeamMask());
-	}
-	break;
-
-	case WEAPON_NINJA:
-	{
-		// reset Hit objects
-		m_NumObjectsHit = 0;
-
-		m_Core.m_Ninja.m_ActivationDir = Direction;
-		m_Core.m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
-		m_Core.m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
-
-		GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, TeamMask());
-	}
-	break;
-	}
 
 	m_AttackTick = Server()->Tick();
 
-	if (m_Core.m_ActiveWeapon != WEAPON_HAMMER && m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0)
-		m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo--;
-	m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = Server()->Tick() + Server()->TickSpeed();
-
 	if(!m_ReloadTimer)
 	{
-		float Mul = 10;
-		switch(m_Core.m_ActiveWeapon)
-		{
-		case WEAPON_GRENADE: Mul = 4; break;
-		}
-
-		float FireDelay = 1000 + m_pPlayer->m_AccUp.m_FireSpeed * Mul;
-		m_ReloadTimer = g_pData->m_Weapons.m_aId[Weapon].m_Firedelay * Server()->TickSpeed() / FireDelay;
+		float FireDelay = 1000 + m_pPlayer->m_AccUp.m_FireSpeed * m_apWeapons[m_ActiveWeapon]->FireDelay();
+		m_ReloadTimer = Server()->TickSpeed() / FireDelay;
 	}
 }
 
 void CCharacter::HandleWeapons()
 {
-	//ninja
-	HandleNinja();
-	HandleJetpack();
-
 	if(m_PainSoundTimer > 0)
 		m_PainSoundTimer--;
-
-	// Check for ammo regen
-	int Weapon = m_Core.m_ActiveWeapon;
-	int AmmoRegen = m_pPlayer->m_AccUp.m_AmmoRegen;
-	float RegenTime = fmax(0.1f, 2 - AmmoRegen / 50.f);
-	int Ammo = m_Core.m_aWeapons[Weapon].m_Ammo;
-	int MaxAmmo = m_Core.m_aWeapons[Weapon].m_MaxAmmo;
-	int Tick = Server()->Tick();
-	if(AmmoRegen && Weapon != WEAPON_HAMMER && Tick > m_Core.m_aWeapons[Weapon].m_AmmoRegenStart && Tick % (int)(Server()->TickSpeed() * RegenTime) == 0 && Ammo < MaxAmmo)
-		m_Core.m_aWeapons[Weapon].m_Ammo++;
 
 	// check reload timer
 	if(m_ReloadTimer)
@@ -707,28 +308,6 @@ void CCharacter::HandleWeapons()
 
 	// fire Weapon, if wanted
 	FireWeapon();
-}
-
-void CCharacter::GiveNinja()
-{
-	m_Core.m_Ninja.m_ActivationTick = Server()->Tick();
-	m_Core.m_aWeapons[WEAPON_NINJA].m_Got = true;
-	m_Core.m_aWeapons[WEAPON_NINJA].m_Ammo = -1;
-	if(m_Core.m_ActiveWeapon != WEAPON_NINJA)
-		m_LastWeapon = m_Core.m_ActiveWeapon;
-	m_Core.m_ActiveWeapon = WEAPON_NINJA;
-
-	if(!m_Core.m_aWeapons[WEAPON_NINJA].m_Got)
-		GameServer()->CreateSound(m_Pos, SOUND_PICKUP_NINJA, TeamMask());
-}
-
-void CCharacter::RemoveNinja()
-{
-	m_Core.m_Ninja.m_CurrentMoveTime = 0;
-	m_Core.m_aWeapons[WEAPON_NINJA].m_Got = false;
-	m_Core.m_ActiveWeapon = m_LastWeapon;
-
-	SetWeapon(m_Core.m_ActiveWeapon);
 }
 
 void CCharacter::SetEmote(int Emote, int Tick)
@@ -1106,7 +685,11 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 {
 	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
 	CCharacterCore *pCore;
-	int Tick, Emote = m_EmoteType, Weapon = m_Core.m_ActiveWeapon, AmmoCount = m_Core.m_aWeapons[Weapon].m_Ammo, Health = 0, Armor = 0;
+	int Tick;
+	int Emote = m_EmoteType;
+	int Weapon = m_apWeapons[m_ActiveWeapon]->SnappingWeapon();
+	int AmmoCount = 0, Health = 0, Armor = 0;
+
 	if(!m_ReckoningTick || GameServer()->m_World.m_Paused)
 	{
 		Tick = 0;
@@ -1132,44 +715,12 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 	if(m_InWater)
 		Emote = EMOTE_BLINK;
 
-	// This could probably happen when m_Jetpack changes instead
-	// jetpack and ninjajetpack prediction
-	if(m_pPlayer->GetCID() == SnappingClient)
-	{
-		if(m_Core.m_Jetpack && Weapon != WEAPON_NINJA)
-		{
-			if(!(m_NeededFaketuning & FAKETUNE_JETPACK))
-			{
-				m_NeededFaketuning |= FAKETUNE_JETPACK;
-				GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
-			}
-		}
-		else
-		{
-			if(m_NeededFaketuning & FAKETUNE_JETPACK)
-			{
-				m_NeededFaketuning &= ~FAKETUNE_JETPACK;
-				GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
-			}
-		}
-	}
-
-	// change eyes, use ninja graphic and set ammo count if player has ninjajetpack
-	if(m_pPlayer->m_NinjaJetpack && m_Core.m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN && !m_Core.m_DeepFrozen && m_FreezeTime == 0 && !m_Core.m_HasTelegunGun)
-	{
-		if(Emote == EMOTE_NORMAL)
-			Emote = EMOTE_HAPPY;
-		Weapon = WEAPON_NINJA;
-		AmmoCount = 10;
-	}
-
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == SERVER_DEMO_CLIENT ||
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
 	{
 		Health = m_Health;
 		Armor = m_Armor;
-		if(m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0)
-			AmmoCount = (m_FreezeTime > 0) ? m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo : 0;
+		AmmoCount = 10;
 	}
 
 	if(GetPlayer()->IsAfk() || GetPlayer()->IsPaused())
@@ -1316,8 +867,6 @@ void CCharacter::Snap(int SnappingClient)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_HOOK_HIT_DISABLED;
 	if(m_Core.m_EndlessJump)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_ENDLESS_JUMP;
-	if(m_Core.m_Jetpack)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_JETPACK;
 	if(m_Core.m_HammerHitDisabled)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_HAMMER_HIT_DISABLED;
 	if(m_Core.m_ShotgunHitDisabled)
@@ -1332,18 +881,6 @@ void CCharacter::Snap(int SnappingClient)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_TELEGUN_GRENADE;
 	if(m_Core.m_HasTelegunLaser)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_TELEGUN_LASER;
-	if(m_Core.m_aWeapons[WEAPON_HAMMER].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
-	if(m_Core.m_aWeapons[WEAPON_GUN].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GUN;
-	if(m_Core.m_aWeapons[WEAPON_SHOTGUN].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
-	if(m_Core.m_aWeapons[WEAPON_GRENADE].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
-	if(m_Core.m_aWeapons[WEAPON_LASER].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
-	if(m_Core.m_ActiveWeapon == WEAPON_NINJA)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
 	if(m_Core.m_LiveFrozen)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_MOVEMENTS_DISABLED;
 
@@ -1856,60 +1393,63 @@ bool CCharacter::UnFreeze()
 {
 	if(m_FreezeTime > 0)
 	{
-		m_Armor = 10;
-		if(!m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Got)
-			m_Core.m_ActiveWeapon = WEAPON_GUN;
 		m_FreezeTime = 0;
 		m_Core.m_FreezeStart = 0;
 		m_FrozenLastTick = true;
+
 		return true;
 	}
 	return false;
 }
 
-void CCharacter::GiveWeapon(int Weapon, bool Remove, int Ammo)
+void CCharacter::GiveWeapon(int Weapon, bool Remove)
 {
-	if(Weapon == WEAPON_NINJA)
+	if(Remove)
 	{
-		if(Remove)
-			RemoveNinja();
-		else
-			GiveNinja();
+		int WeaponSlot = -1;
+		for(int i = 0; i < MAX_WEAPONS; i++)
+		{
+			auto &pWeapon = m_apWeapons[i];
+			if(pWeapon && pWeapon->WeaponID() == Weapon)
+				WeaponSlot = i;
+		}
+
+		if(WeaponSlot == -1)
+			return;
+
+		delete m_apWeapons[WeaponSlot];
+		m_apWeapons[WeaponSlot] = 0x0;
+
 		return;
 	}
 
-	if(Remove)
-	{
-		if(GetActiveWeapon() == Weapon)
-			SetActiveWeapon(WEAPON_GUN);
-	}
-	else
-	{
-		m_Core.m_aWeapons[Weapon].m_Ammo = -1;
-	}
+	int WeaponSlot = -1;
 
-	m_Core.m_aWeapons[Weapon].m_Got = !Remove;
-	m_Core.m_aWeapons[Weapon].m_AmmoRegenStart = 0;
-	m_Core.m_aWeapons[Weapon].m_MaxAmmo = 10 + (m_pPlayer->m_AccUp.m_Ammo * 5);
-	m_Core.m_aWeapons[Weapon].m_Ammo = m_Core.m_aWeapons[Weapon].m_MaxAmmo;
+	for(int i = 0; i < MAX_WEAPONS; i++)
+		if(m_apWeapons[i])
+			WeaponSlot = i;
+
+	// No empty slots for weapon
+	if(WeaponSlot == -1)
+		return;
+
+	// TODO: Move this stuff to CMMOCore or smth else
+	switch(Weapon)
+	{
+	case MMO_WEAPON_HAMMER:
+		m_apWeapons[WeaponSlot] = new CHammer();
+		break;
+	}
 }
 
 void CCharacter::GiveAllWeapons()
 {
-	for(int i = WEAPON_GUN; i < NUM_WEAPONS - 1; i++)
-	{
-		GiveWeapon(i);
-	}
+
 }
 
 void CCharacter::ResetPickups()
 {
-	for(int i = WEAPON_SHOTGUN; i < NUM_WEAPONS - 1; i++)
-	{
-		m_Core.m_aWeapons[i].m_Got = false;
-		if(m_Core.m_ActiveWeapon == i)
-			m_Core.m_ActiveWeapon = WEAPON_GUN;
-	}
+
 }
 
 void CCharacter::SetEndlessHook(bool Enable)
