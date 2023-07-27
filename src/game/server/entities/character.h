@@ -4,7 +4,6 @@
 #define GAME_SERVER_ENTITIES_CHARACTER_H
 
 #include <game/server/entity.h>
-#include <game/server/mmo/weapons/weapon_base.h>
 
 #include <utility>
 
@@ -14,17 +13,13 @@ struct CAntibotCharacterData;
 
 enum
 {
-	// Fake tunes
-	FAKETUNE_FREEZE = 1 << 0,
-	FAKETUNE_SOLO = 1 << 1,
-	FAKETUNE_NOJUMP = 1 << 2,
-	FAKETUNE_NOCOLL = 1 << 3,
-	FAKETUNE_NOHOOK = 1 << 4,
-	FAKETUNE_JETPACK = 1 << 5,
-	FAKETUNE_NOHAMMER = 1 << 6,
-
-	// Weapons
-	MAX_WEAPONS = 6
+	FAKETUNE_FREEZE = 1,
+	FAKETUNE_SOLO = 2,
+	FAKETUNE_NOJUMP = 4,
+	FAKETUNE_NOCOLL = 8,
+	FAKETUNE_NOHOOK = 16,
+	FAKETUNE_JETPACK = 32,
+	FAKETUNE_NOHAMMER = 64,
 };
 
 class CCharacter : public CEntity
@@ -48,6 +43,7 @@ public:
 	bool IsGrounded();
 
 	void SetWeapon(int W);
+	void SetJetpack(bool Active);
 	void SetSolo(bool Solo);
 	void SetSuper(bool Super);
 	void SetLiveFrozen(bool Active);
@@ -56,6 +52,8 @@ public:
 	void DoWeaponSwitch();
 
 	void HandleWeapons();
+	void HandleNinja();
+	void HandleJetpack();
 
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
@@ -72,7 +70,9 @@ public:
 	bool IncreaseHealth(int Amount);
 	bool IncreaseArmor(int Amount);
 
-	void GiveWeapon(int Weapon, bool Remove = false);
+	void GiveWeapon(int Weapon, bool Remove = false, int Ammo = 10);
+	void GiveNinja();
+	void RemoveNinja();
 	void SetEndlessHook(bool Enable);
 
 	void SetEmote(int Emote, int Tick);
@@ -100,6 +100,7 @@ private:
 	int m_LastWeapon;
 	int m_QueuedWeapon;
 
+	int m_ReloadTimer;
 	int m_AttackTick;
 
 	int m_DamageTaken;
@@ -116,15 +117,12 @@ private:
 	CNetObj_PlayerInput m_LatestPrevInput;
 	CNetObj_PlayerInput m_LatestInput;
 
-public:
-	int m_ReloadTimer;
-
 	// input
+public:
 	CNetObj_PlayerInput m_PrevInput;
 	CNetObj_PlayerInput m_Input;
 	CNetObj_PlayerInput m_SavedInput;
 	int m_NumInputs;
-
 private:
 
 	int m_DamageTakenTick;
@@ -218,6 +216,8 @@ public:
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers
 	int GetLastWeapon() { return m_LastWeapon; }
 	void SetLastWeapon(int LastWeap) { m_LastWeapon = LastWeap; }
+	int GetActiveWeapon() { return m_Core.m_ActiveWeapon; }
+	void SetActiveWeapon(int ActiveWeap) { m_Core.m_ActiveWeapon = ActiveWeap; }
 	void SetLastAction(int LastAction) { m_LastAction = LastAction; }
 	int GetArmor() { return m_Armor; }
 	void SetArmor(int Armor) { m_Armor = Armor; }
@@ -230,6 +230,10 @@ public:
 	CCharacterCore GetCore() { return m_Core; }
 	void SetCore(CCharacterCore Core) { m_Core = std::move(Core); }
 	CCharacterCore *Core() { return &m_Core; }
+	bool GetWeaponGot(int Type) { return m_Core.m_aWeapons[Type].m_Got; }
+	void SetWeaponGot(int Type, bool Value) { m_Core.m_aWeapons[Type].m_Got = Value; }
+	int GetWeaponAmmo(int Type) { return m_Core.m_aWeapons[Type].m_Ammo; }
+	void SetWeaponAmmo(int Type, int Value) { m_Core.m_aWeapons[Type].m_Ammo = Value; }
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Core.m_Ninja.m_ActivationDir = ActivationDir; }
 	void SetNinjaActivationTick(int ActivationTick) { m_Core.m_Ninja.m_ActivationTick = ActivationTick; }
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Core.m_Ninja.m_CurrentMoveTime = CurrentMoveTime; }
@@ -253,11 +257,6 @@ public:
 
 	bool m_InShop;
 	bool m_InCraft;
-
-	CWeaponBase *m_apWeapons[MAX_WEAPONS];
-	int m_ActiveWeapon;
-
-	vec2 GetDirection() { return vec2(m_Input.m_TargetX, m_Input.m_TargetY); }
 
 private:
 	bool m_NoDamage;

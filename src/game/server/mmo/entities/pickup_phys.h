@@ -15,13 +15,12 @@ class CPickupPhys : public CEntity
 	friend class CCharacter;
 
 	vec2 m_Vel;
-
-public:
+	int m_Type;
 	int m_ItemID;
 	int m_Count;
 	int m_DestroyTick;
-	int m_Type;
 
+public:
 	CPickupPhys(CGameWorld *pWorld, vec2 Pos, vec2 Vel, int Type, int Count, int ItemID = -1);
 
 	virtual void Tick() override;
