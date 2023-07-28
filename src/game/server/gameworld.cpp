@@ -472,7 +472,7 @@ void CGameWorld::ReleaseHooked(int ClientID)
 	}
 }
 
-CDummyBase *CGameWorld::IntersectDummy(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CCharacter *pNotThis)
+CDummyBase *CGameWorld::IntersectDummy(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CCharacter *pNotThis, bool NotPet)
 {
 	// Find other players
 	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
@@ -481,7 +481,9 @@ CDummyBase *CGameWorld::IntersectDummy(vec2 Pos0, vec2 Pos1, float Radius, vec2 
 	CDummyBase *p = (CDummyBase *)FindFirst(ENTTYPE_DUMMY);
 	for(; p; p = (CDummyBase *)p->TypeNext())
 	{
-		if (!p->IsAlive())
+		if(!p->IsAlive())
+			continue;
+		if(p->GetDummyType() == DUMMY_TYPE_PET && NotPet)
 			continue;
 
 		vec2 IntersectPos;

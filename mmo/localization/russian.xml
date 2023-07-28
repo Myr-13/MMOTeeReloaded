@@ -27,15 +27,15 @@
     <Key Text="%s found Secret Bag! Got %d + Time %d Money Bag!">%s нашел секретный мешок! Он получил %d денежных мешков + %d за время</Key>
     <Key Text="You have reached the maximum amount of materials. Go sell them in a shop!">Ты накопил максимальное количество материала. Иди и продай его в магазине!</Key>
     <Key Text="+%d %s work exp">+%d %s опыта работы</Key>
-    <Key Text="------------ Your stats">------------ Твоя статистика</Key>
+    <Key Text="------------ Your stats">------------ Статистика</Key>
     <Key Text="------------ Server">------------ Сервер</Key>
     <Key Text="------------ Account menu">------------ Меню аккаунта</Key>
     <Key Text="------------ Clan menu">------------ Меню клана</Key>
     <Key Text="------------ Shop">------------ Магазин</Key>
     <Key Text="------------ Craft">------------ Крафт</Key>
     <Key Text="------------ Info about server">------------ Инфо о сервере</Key>
-    <Key Text="------------ Your equipment">------------ Твоя экипировка</Key>
-    <Key Text="------------ Your inventory">------------ Твой инвентарь</Key>
+    <Key Text="------------ Your equipment">------------ Экипировка</Key>
+    <Key Text="------------ Your inventory">------------ Инвентарь</Key>
     <Key Text="------------ Upgrades">------------ Прокачка</Key>
     <Key Text="------------ Clan info">------------ Инфо о клане</Key>
     <Key Text="------------ Clan upgrade">------------ Прокачка клана</Key>
@@ -65,4 +65,6 @@
     <Key Text="Contact administrator and send screenshot of this menu.">Напишите администратору и отправьте скриншот этого меню.</Key>
     <Key Text="► Add money to bank">► Добавить деньги в казну</Key>
     <Key Text="Reason = count">Причина = количество</Key>
+    <Key Text="☞ ☑ Put off">☞ ☑ Снять</Key>
+    <Key Text="☞ ☐ Put on">☞ ☑ Надеть</Key>
 </Language>

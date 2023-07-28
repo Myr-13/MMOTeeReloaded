@@ -102,7 +102,7 @@ void CProjectile::Tick()
 	if(pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit)
 		pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
 	if(!pTargetChr)
-		pTargetDummy = GameWorld()->IntersectDummy(PrevPos, ColPos, 6.f, ColPos);
+		pTargetDummy = GameWorld()->IntersectDummy(PrevPos, ColPos, 6.f, ColPos, 0x0, true);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
@@ -128,7 +128,12 @@ void CProjectile::Tick()
 		return;
 	}
 
-	if(((pTargetChr && (pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit || m_Owner == -1)) || Collide || GameLayerClipped(CurPos) || pTargetDummy) && !IsWeaponCollide)
+	if(((
+		(pTargetChr || pTargetDummy) &&
+		(pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit || m_Owner == -1)) ||
+		Collide ||
+		GameLayerClipped(CurPos)
+		) && !IsWeaponCollide)
 	{
 		// && (!pTargetChr || (m_Type == WEAPON_SHOTGUN && Collide))
 		if(m_Explosive)

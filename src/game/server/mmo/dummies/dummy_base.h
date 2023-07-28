@@ -8,13 +8,15 @@
 enum
 {
 	DUMMY_TYPE_STAND,
-	DUMMY_TYPE_SLIME
+	DUMMY_TYPE_SLIME,
+	DUMMY_TYPE_PET
 };
 
 enum
 {
 	DUMMY_AI_TYPE_NONE,
-	DUMMY_AI_TYPE_ATTACK
+	DUMMY_AI_TYPE_ATTACK,
+	DUMMY_AI_TYPE_PET
 };
 
 class CDummyBase : public CEntity
@@ -23,22 +25,26 @@ class CDummyBase : public CEntity
 
 	CCharacterCore m_Core;
 	CTeeInfo m_TeeInfo;
-	CNetObj_PlayerInput m_Input;
-	CNetObj_PlayerInput m_PrevInput;
 
 	vec2 m_SpawnPos;
 	bool m_Alive;
 	int m_SpawnTick;
 	int m_ReloadTimer;
+	int m_AttackTick;
 
 	char m_aName[MAX_NAME_LENGTH];
 	char m_aFormatedName[MAX_NAME_LENGTH];
 	char m_aClan[MAX_CLAN_LENGTH];
 
+public:
+	CNetObj_PlayerInput m_Input;
+	CNetObj_PlayerInput m_PrevInput;
+
 	int m_Health;
 	int m_Armor;
 	bool m_NoDamage;
 
+private:
 	int m_DummyType;
 	int m_DummyAIType;
 	class CDummyController *m_pDummyController;
@@ -72,6 +78,7 @@ public:
 	int GetDummyType() { return m_DummyType; }
 	CCharacterCore *Core() { return &m_Core; }
 	bool IsNoDamage() { return m_NoDamage; }
+	class CDummyController *DummyController() { return m_pDummyController; }
 
 	// Stats
 	int m_Level;

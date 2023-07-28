@@ -37,11 +37,10 @@ private:
 	*/
 	float m_ProximityRadius;
 
-protected:
+public: // TODO: Maybe make protected
 	/* State */
 	bool m_MarkedForDestroy;
 
-public: // TODO: Maybe make protected
 	/*
 		Variable: m_Pos
 			Contains the current posititon of the entity.

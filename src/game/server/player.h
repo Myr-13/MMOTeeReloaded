@@ -18,7 +18,6 @@ class CCharacter;
 class CGameContext;
 class IServer;
 struct CNetObj_PlayerInput;
-struct CScorePlayerResult;
 
 enum
 {
@@ -226,6 +225,7 @@ public:
 	bool m_LoggedIn;
 	int m_ClanInviteEndTick;
 	int m_ClanInviteID;
+	class CDummyBase *m_pPet;
 
 	void AddEXP(int EXP, bool NoBonus = false);
 	void AddWorkEXP(int WorkID, int EXP);

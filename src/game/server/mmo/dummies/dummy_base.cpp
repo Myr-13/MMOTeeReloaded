@@ -13,6 +13,9 @@
 // Mobs
 #include "mobs/slime.h"
 
+// Pets
+#include "pets/pet.h"
+
 CDummyBase::CDummyBase(CGameWorld *pWorld, vec2 Pos, int DummyType, int DummyAIType) :
 	CEntity(pWorld, CGameWorld::ENTTYPE_DUMMY, Pos, 28.f)
 {
@@ -29,6 +32,7 @@ CDummyBase::CDummyBase(CGameWorld *pWorld, vec2 Pos, int DummyType, int DummyAIT
 	m_MaxHealth = 10;
 	m_MaxArmor = 10;
 	m_Damage = 0;
+	m_AttackTick = 0;
 
 	str_copy(m_aName, "[NULL BOT]");
 	str_copy(m_aClan, "");
@@ -37,12 +41,9 @@ CDummyBase::CDummyBase(CGameWorld *pWorld, vec2 Pos, int DummyType, int DummyAIT
 	// Create dummy controller
 	switch(m_DummyAIType)
 	{
-	case DUMMY_AI_TYPE_NONE:
-		m_pDummyController = 0x0;
-		break;
-	case DUMMY_AI_TYPE_ATTACK:
-		m_pDummyController = new CSlimeController();
-		break;
+	case DUMMY_AI_TYPE_NONE: m_pDummyController = 0x0; break;
+	case DUMMY_AI_TYPE_ATTACK: m_pDummyController = new CSlimeController(); break;
+	case DUMMY_AI_TYPE_PET: m_pDummyController = new CPet(); break;
 	default:
 		m_pDummyController = 0x0;
 		dbg_msg("dummy", "invalid dummy ai type: %d", m_DummyType);
@@ -58,9 +59,8 @@ CDummyBase::~CDummyBase()
 {
 	switch(m_DummyType)
 	{
-	case DUMMY_TYPE_SLIME:
-		delete (CSlimeController *)m_pDummyController;
-		break;
+	case DUMMY_TYPE_SLIME: delete (CSlimeController *)m_pDummyController; break;
+	case DUMMY_TYPE_PET: delete (CPet *)m_pDummyController; break;
 	}
 }
 
@@ -113,13 +113,13 @@ void CDummyBase::Die(int Killer)
 
 void CDummyBase::TakeDamage(vec2 Force, int Damage, int From, int Weapon)
 {
-	if (!m_Alive)
+	if(!m_Alive)
 		return;
 
-	if (From >= 0)
+	if(From >= 0)
 		Damage += MMOCore()->GetPlusDamage(From);
 
-	if (Damage)
+	if(Damage)
 	{
 		// Emote
 		m_EmoteType = EMOTE_PAIN;
@@ -139,12 +139,11 @@ void CDummyBase::TakeDamage(vec2 Force, int Damage, int From, int Weapon)
 			}
 		}
 
-		if(From >= 0)
-			m_Health -= Damage;
+		m_Health -= Damage;
 
 		if(From >= 0 && GameServer()->m_apPlayers[From])
 		{
-			//GameServer()->CreateSound(m_Pos, SOUND_HIT, -1);
+			GameServer()->CreateSound(m_Pos, SOUND_HIT);
 
 			//int Steal = (100 - Server()->GetItemCount(From, ACCESSORY_ADD_STEAL_HP) > 30) ? 100 - Server()->GetItemCount(From, ACCESSORY_ADD_STEAL_HP) > 30 : 30;
 			//pFrom->m_Health += Steal;
@@ -166,7 +165,7 @@ void CDummyBase::FireWeapon()
 	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_LASER)
 		FullAuto = true;
 
-	bool WillFire = (m_Input.m_Fire & 1) && (FullAuto || !(m_PrevInput.m_Fire & 1));
+	bool WillFire = (m_Input.m_Fire & 1) && !(m_PrevInput.m_Fire & 1);
 	if (!WillFire)
 		return;
 
@@ -279,6 +278,38 @@ void CDummyBase::FireWeapon()
 			Hits++;
 		}
 
+		Num = GameServer()->m_World.FindEntities(ProjStartPos, GetProximityRadius(), apEnts,
+			MAX_CLIENTS, CGameWorld::ENTTYPE_DUMMY);
+
+		for(int i = 0; i < Num; ++i)
+		{
+			auto *pTarget = static_cast<CDummyBase *>(apEnts[i]);
+
+			if(!pTarget->IsAlive())
+				continue;
+
+			// set his velocity to fast upward (for now)
+			if(length(pTarget->m_Pos - ProjStartPos) > 0.0f)
+				GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * GetProximityRadius() * 0.5f);
+			else
+				GameServer()->CreateHammerHit(ProjStartPos);
+
+			vec2 Dir;
+			if(length(pTarget->m_Pos - m_Pos) > 0.0f)
+				Dir = normalize(pTarget->m_Pos - m_Pos);
+			else
+				Dir = vec2(0.f, -1.f);
+
+			float Strength = GameServer()->Tuning()->m_HammerStrength;
+
+			vec2 Temp = pTarget->Core()->m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
+			//Temp = ClampVel(pTarget->m_MoveRestrictions, Temp);
+			Temp -= pTarget->Core()->m_Vel;
+			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, 3, -1, m_Core.m_ActiveWeapon);
+
+			Hits++;
+		}
+
 		// if we Hit anything, we have to wait for to reload
 		if(Hits)
 		{
@@ -297,13 +328,15 @@ void CDummyBase::FireWeapon()
 	}
 	break;
 	}
+
+	m_AttackTick = Server()->Tick();
 }
 
 void CDummyBase::HandleTiles(int Tile)
 {
-	if (Tile == TILE_OFF_DAMAGE)
+	if (Tile == TILE_OFF_DAMAGE && m_DummyType != DUMMY_TYPE_PET)
 		Die(-1);
-	else if (Tile == TILE_ON_DAMAGE)
+	else if (Tile == TILE_ON_DAMAGE && m_DummyType != DUMMY_TYPE_PET)
 		Die(-1);
 
 	else if (Tile == TILE_WATER)
@@ -312,8 +345,8 @@ void CDummyBase::HandleTiles(int Tile)
 
 void CDummyBase::Destroy()
 {
-	for (int i = 0; i < GameWorld()->m_Core.m_vDummies.size(); i++)
-		if (GameWorld()->m_Core.m_vDummies[i] == &m_Core)
+	for(int i = 0; i < GameWorld()->m_Core.m_vDummies.size(); i++)
+		if(GameWorld()->m_Core.m_vDummies[i] == &m_Core)
 			GameWorld()->m_Core.m_vDummies.erase(GameWorld()->m_Core.m_vDummies.begin() + i);
 
 	delete this;
@@ -399,11 +432,32 @@ void CDummyBase::Snap(int SnappingClient)
 	pCharacter->m_Tick = Server()->Tick();
 	pCharacter->m_Emote = (m_EmoteStop > Server()->Tick()) ? m_EmoteType : m_DefaultEmote;
 	pCharacter->m_HookedPlayer = -1;
-	pCharacter->m_AttackTick = 0;
+	pCharacter->m_AttackTick = m_AttackTick;
 	pCharacter->m_Direction = m_Input.m_Direction;
 	pCharacter->m_Weapon = m_Input.m_WantedWeapon;
 	pCharacter->m_AmmoCount = 0;
 	pCharacter->m_Health = 0;
 	pCharacter->m_Armor = 0;
 	pCharacter->m_PlayerFlags = PLAYERFLAG_PLAYING;
+
+	// Snap ddnet character (just for pets kek)
+	CNetObj_DDNetCharacter *pDDNetCharacter = Server()->SnapNewItem<CNetObj_DDNetCharacter>(SelfID);
+	if(!pDDNetCharacter)
+		return;
+
+	pDDNetCharacter->m_Flags = 0;
+	if(m_DummyType == DUMMY_TYPE_PET)
+		pDDNetCharacter->m_Flags = CHARACTERFLAG_COLLISION_DISABLED | CHARACTERFLAG_HOOK_HIT_DISABLED;
+
+	pDDNetCharacter->m_FreezeEnd = 0;
+	pDDNetCharacter->m_Jumps = m_Core.m_Jumps;
+	pDDNetCharacter->m_TeleCheckpoint = -1;
+	pDDNetCharacter->m_StrongWeakID = 0;
+
+	// Display Information
+	pDDNetCharacter->m_JumpedTotal = m_Core.m_JumpedTotal;
+	pDDNetCharacter->m_NinjaActivationTick = m_Core.m_Ninja.m_ActivationTick;
+	pDDNetCharacter->m_FreezeStart = m_Core.m_FreezeStart;
+	pDDNetCharacter->m_TargetX = m_Core.m_Input.m_TargetX;
+	pDDNetCharacter->m_TargetY = m_Core.m_Input.m_TargetY;
 }

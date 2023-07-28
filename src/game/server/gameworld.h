@@ -97,7 +97,7 @@ public:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
 	*/
 	CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CCharacter *pNotThis = nullptr, int CollideWith = -1, const CCharacter *pThisOnly = nullptr);
-	CDummyBase *IntersectDummy(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CCharacter *pNotThis = nullptr);
+	CDummyBase *IntersectDummy(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CCharacter *pNotThis = nullptr, bool NotPet = false);
 	CEntity *ClosestEntity(vec2 Pos, float Radius, int EntType, const CEntity *pNotThis = 0x0);
 	/*
 		Function: ClosestCharacter

@@ -2,6 +2,7 @@
 
 #include "dummies/dummy_base.h"
 #include "entities/pickup_phys.h"
+#include "dummies/pets/pet.h"
 
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
@@ -733,15 +734,45 @@ void CMMOCore::ResetTeeInfo(int ClientID)
 	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
+		return;
+	CCharacter *pChr = pPly->GetCharacter();
+	if(!pChr)
 		return;
 
+	// Armor colors
 	int EquippedBody = GetEquippedItem(pPly->GetCID(), ITEM_TYPE_ARMOR_BODY);
 	int EquippedFeet = GetEquippedItem(pPly->GetCID(), ITEM_TYPE_ARMOR_FEET);
 
 	pPly->m_TeeInfos.m_UseCustomColor = 1;
 	pPly->m_TeeInfos.m_ColorBody = ArmorColor(EquippedBody);
 	pPly->m_TeeInfos.m_ColorFeet = ArmorColor(EquippedFeet);
+
+	// Pets
+	int EquippedPet = GetEquippedItem(pPly->GetCID(), ITEM_TYPE_PET);
+
+	if(pPly->m_pPet && EquippedPet == -1)
+	{
+		pPly->m_pPet->Destroy();
+		pPly->m_pPet = 0x0;
+	}
+
+	if(!pPly->m_pPet && EquippedPet != -1)
+	{
+		pPly->m_pPet = new CDummyBase(GameWorld(), pChr->m_Pos, DUMMY_TYPE_PET, DUMMY_AI_TYPE_PET);
+		pPly->m_pPet->SetName("Pet");
+		pPly->m_pPet->SetClan("");
+		pPly->m_pPet->SetTeeInfo({"default", 1, 255, 255});
+		pPly->m_pPet->m_Level = 1;
+		pPly->m_pPet->m_MaxHealth = 1000000000;
+		pPly->m_pPet->m_MaxArmor = 1000000000;
+		pPly->m_pPet->m_Damage = 1;
+
+		((CPet *)pPly->m_pPet->DummyController())->m_Owner = ClientID;
+
+		// Respawn bot with new stats
+		pPly->m_pPet->Spawn();
+	}
 }
 
 void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)

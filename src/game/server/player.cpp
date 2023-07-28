@@ -140,6 +140,7 @@ void CPlayer::Reset()
 
 	m_LoggedIn = false;
 	m_ClanInviteEndTick = 0;
+	m_pPet = 0x0;
 }
 
 static int PlayerFlags_SixToSeven(int Flags)

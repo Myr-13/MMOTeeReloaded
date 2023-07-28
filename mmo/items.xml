@@ -9,6 +9,7 @@
     <!-- 5 - Other -->
     <!-- 6 - Armor body -->
     <!-- 7 - Armor feet -->
+    <!-- 8 - Pet -->
     <!-- Rarity: -->
     <!-- 0 - Common -->
     <!-- 1 - Uncommon -->
@@ -112,4 +113,7 @@
     <Item ID="83" Type="0" Rarity="0" Name="Material" NotDroppable="true" MaxCount="6000"/>
     <Item ID="84" Type="2" Rarity="0" Name="Event box"/>
     <Item ID="85" Type="2" Rarity="0" Name="Reset upgrades"/>
+
+    <!-- Pets -->
+    <Item ID="86" Type="8" Rarity="0" Name="Mini slime"/>
 </Items>

@@ -112,6 +112,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Health = m_MaxHealth;
 	m_Armor = m_MaxArmor;
 
+	MMOCore()->ResetTeeInfo(pPlayer->GetCID());
+
 	return true;
 }
 

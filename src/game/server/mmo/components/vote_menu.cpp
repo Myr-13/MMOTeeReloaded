@@ -354,6 +354,7 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		AddMenuVoteLocalize(ClientID, "null", "------------ Your equipment");
 		AddMenuVoteLocalize(ClientID, "inv_list6", "☞ Armor body"); // ITEM_TYPE_ARMOR_BODY = 6
 		AddMenuVoteLocalize(ClientID, "inv_list7", "☞ Armor feet"); // ITEM_TYPE_ARMOR_FEET = 7
+		AddMenuVoteLocalize(ClientID, "inv_list8", "☞ Pet"); // ITEM_TYPE_ARMOR_FEET = 8
 
 		AddBack(ClientID, MENU_MAIN);
 	}
@@ -549,13 +550,13 @@ void CVoteMenu::ItemInfo(int ClientID, int ItemID)
 		str_format(aBuf, sizeof(aBuf), "inv_item_use%d", ItemID);
 		AddMenuVote(ClientID, aBuf, "☞ Use");
 	}
-	else if (ItemType == ITEM_TYPE_ARMOR_BODY || ItemType == ITEM_TYPE_ARMOR_FEET)
+	else if (ItemType >= ITEM_TYPE_ARMOR_BODY)
 	{
 		bool IsEquippedItem = (MMOCore()->GetEquippedItem(ClientID, ItemType) == ItemID);
 
 		str_format(aBuf, sizeof(aBuf), "inv_item_eqp%d", ItemID);
 		str_format(aBuf2, sizeof(aBuf2), "☞ %s Put %s", IsEquippedItem ? "☑" : "☐", IsEquippedItem ? "off" : "on");
-		AddMenuVote(ClientID, aBuf, aBuf2);
+		AddMenuVoteLocalize(ClientID, aBuf, aBuf2);
 	}
 
 	str_format(aBuf, sizeof(aBuf), "inv_item_drop%d", ItemID);
