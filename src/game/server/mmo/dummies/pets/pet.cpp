@@ -42,15 +42,7 @@ void CPet::Move()
 
 	// Jump if pet stuck
 	if(m_OldDir == m_Dir && m_OldPos == m_Pos && m_Dir != 0)
-		m_AntiStuckTicks++;
-	else
-		m_AntiStuckTicks = 0;
-
-	if(m_AntiStuckTicks)
-	{
 		Jump();
-		m_AntiStuckTicks = 0;
-	}
 
 	// Change view
 	if(m_Dir == -1)
