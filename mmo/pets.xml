@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Pets>
+    <!-- Mini slime -->
+    <Pet ID="86">
+        <TeeInfo Skin="ghost" UseCustomColors="1" ColorBody="5504798" ColorFeet="5504798"/>
+        <Stats Damage="3"/>
+        <PlyStats Health="100" Armor="0"/>
+    </Pet>
+</Pets>

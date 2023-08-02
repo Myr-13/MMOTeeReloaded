@@ -16,31 +16,31 @@
         <Spawn SpawnPoint="Slime"/>
     </Mob>
     <!-- Zombie -->
-    <Mob ID="2" AIType="1">
+    <Mob ID="1" AIType="1">
         <TeeInfo Name="Zombie" Skin="cammo" UseCustomColors="1" ColorBody="5406464" ColorFeet="5406464"/>
         <Stats Level="30" HP="60" Armor="0" Damage="10"/>
         <Spawn SpawnPoint="Zombie"/>
     </Mob>
     <!-- Skeleton -->
-    <Mob ID="3" AIType="1">
+    <Mob ID="1" AIType="1">
         <TeeInfo Name="Skeleton" Skin="cammostripes" UseCustomColors="1" ColorBody="255" ColorFeet="255"/>
         <Stats Level="100" HP="200" Armor="40" Damage="20"/>
         <Spawn SpawnPoint="Skeleton"/>
     </Mob>
     <!-- Goblin -->
-    <Mob ID="4" AIType="1">
+    <Mob ID="1" AIType="1">
         <TeeInfo Name="Goblin" Skin="pinky" UseCustomColors="1" ColorBody="5677091" ColorFeet="5677091"/>
         <Stats Level="175" HP="350" Armor="70" Damage="35"/>
         <Spawn SpawnPoint="Goblin"/>
     </Mob>
     <!-- Hohol -->
-    <Mob ID="5" AIType="1">
+    <Mob ID="1" AIType="1">
         <TeeInfo Name="Hohol" Skin="pinky" UseCustomColors="0" ColorBody="0" ColorFeet="0"/>
         <Stats Level="200" HP="450" Armor="130" Damage="70"/>
         <Spawn SpawnPoint="Hohol"/>
     </Mob>
     <!-- Sochan -->
-    <Mob ID="6" AIType="1">
+    <Mob ID="1" AIType="1">
         <TeeInfo Name="Sochan" Skin="redstripe" UseCustomColors="1" ColorBody="9740323" ColorFeet="12386048"/>
         <Stats Level="250" HP="500" Armor="200" Damage="100"/>
         <Spawn SpawnPoint="Sochan"/>

@@ -17,13 +17,41 @@ using namespace pugi;
 class CGameWorld *CMMOCore::GameWorld() { return &m_pGameServer->m_World; }
 class IServer *CMMOCore::Server() { return m_pGameServer->Server(); }
 
+xml_document OpenXML(const char *pName)
+{
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "mmo/%s", pName);
+
+	xml_document Document;
+	xml_parse_result ParseResult = Document.load_file(aBuf);
+
+	if (!ParseResult)
+	{
+		dbg_msg("xml", "source file 'mmo/%s' parsed with errors!", pName);
+		dbg_msg("xml", "error: %s", ParseResult.description());
+
+		dbg_break();
+	}
+
+	return Document;
+}
+
 void CMMOCore::Init(CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 
-	xml_document Document;
+	// Load all data from xml
+	InitItems();
+	InitCrafts();
+	InitArmor();
+	InitShop();
+	InitMobs();
+	InitPets();
+}
 
-	// Load items from mmo/items.xml
+void CMMOCore::InitItems()
+{
+	xml_document Document;
 	xml_parse_result ParseResult = Document.load_file("mmo/items.xml");
 
 	if (!ParseResult)
@@ -35,7 +63,6 @@ void CMMOCore::Init(CGameContext *pGameServer)
 	}
 
 	xml_node Root = Document.child("Items");
-
 	for (xml_node Node : Root)
 	{
 		SInvItem Item;
@@ -49,31 +76,13 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		m_vItems.push_back(Item);
 	}
 
-	// Load shop items from mmo/shop.xml
-	ParseResult = Document.load_file("mmo/shop.xml");
+	dbg_msg("items", "loaded %d items", m_vItems.size());
+}
 
-	if (!ParseResult)
-	{
-		dbg_msg("xml", "source file 'mmo/shop.xml' parsed with errors!");
-		dbg_msg("xml", "error: %s", ParseResult.description());
-
-		dbg_break();
-	}
-
-	Root = Document.child("Shop");
-
-	for (xml_node Node : Root)
-	{
-		SShopEntry Entry;
-		Entry.m_ID = Node.attribute("ID").as_int(-1);
-		Entry.m_Cost = Node.attribute("Cost").as_int(-1);
-		Entry.m_Level = Node.attribute("Level").as_int(-1);
-
-		m_vShopItems.push_back(Entry);
-	}
-
-	// Load mobs from mmo/mobs.xml
-	ParseResult = Document.load_file("mmo/mobs.xml");
+void CMMOCore::InitMobs()
+{
+	xml_document Document;
+	xml_parse_result ParseResult = Document.load_file("mmo/mobs.xml");
 
 	if (!ParseResult)
 	{
@@ -83,8 +92,7 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		dbg_break();
 	}
 
-	Root = Document.child("Mobs");
-
+	xml_node Root = Document.child("Mobs");
 	for (xml_node Node : Root)
 	{
 		xml_node TeeInfo = Node.child("TeeInfo");
@@ -105,11 +113,14 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		Data.m_Damage = Stats.attribute("Damage").as_int();
 		str_copy(Data.m_aSpawnPointName, Spawn.empty() ? "" : Spawn.attribute("SpawnPoint").as_string());
 
-		m_vBotDatas.push_back(Data);
+		m_vBotsData.push_back(Data);
 	}
+}
 
-	// Load armors from mmo/armors.xml
-	ParseResult = Document.load_file("mmo/armors.xml");
+void CMMOCore::InitArmor()
+{
+	xml_document Document;
+	xml_parse_result ParseResult = Document.load_file("mmo/armors.xml");
 
 	if (!ParseResult)
 	{
@@ -119,8 +130,7 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		dbg_break();
 	}
 
-	Root = Document.child("Armors");
-
+	xml_node Root = Document.child("Armors");
 	for (xml_node Node : Root)
 	{
 		xml_node Body = Node.child("Body");
@@ -135,11 +145,34 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		Data.m_Health = Stats.attribute("Health").as_int(10);
 		Data.m_Armor = Stats.attribute("Armor").as_int(0);
 
-		m_vArmorDatas.push_back(Data);
+		m_vArmorsData.push_back(Data);
 	}
+}
 
-	// Load armors from mmo/crafts.xml
-	ParseResult = Document.load_file("mmo/crafts.xml");
+void CMMOCore::InitPets()
+{
+	xml_document Document = OpenXML("pets.xml");
+	xml_node Root = Document.first_child();
+
+	for (xml_node Node : Root)
+	{
+		SPetData Entry;
+		Entry.m_ID = Node.attribute("ID").as_int(-1);
+
+		xml_node TeeInfo = Node.child("TeeInfo");
+		str_copy(Entry.m_TeeInfo.m_aSkinName, TeeInfo.attribute("Skin").as_string());
+		Entry.m_TeeInfo.m_UseCustomColor = TeeInfo.attribute("UseCustomColors").as_int();
+		Entry.m_TeeInfo.m_ColorBody = TeeInfo.attribute("ColorBody").as_int();
+		Entry.m_TeeInfo.m_ColorFeet = TeeInfo.attribute("ColorFeet").as_int();
+
+		m_vPetsData.push_back(Entry);
+	}
+}
+
+void CMMOCore::InitCrafts()
+{
+	xml_document Document;
+	xml_parse_result ParseResult = Document.load_file("mmo/crafts.xml");
 
 	if (!ParseResult)
 	{
@@ -149,8 +182,7 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		dbg_break();
 	}
 
-	Root = Document.child("Crafts");
-
+	xml_node Root = Document.child("Crafts");
 	for (xml_node Node : Root)
 	{
 		SCraftData Craft;
@@ -168,6 +200,33 @@ void CMMOCore::Init(CGameContext *pGameServer)
 		}
 
 		m_vCrafts.push_back(Craft);
+	}
+
+	dbg_msg("crafts", "loaded %d crafts", m_vCrafts.size());
+}
+
+void CMMOCore::InitShop()
+{
+	xml_document Document;
+	xml_parse_result ParseResult = Document.load_file("mmo/shop.xml");
+
+	if (!ParseResult)
+	{
+		dbg_msg("xml", "source file 'mmo/shop.xml' parsed with errors!");
+		dbg_msg("xml", "error: %s", ParseResult.description());
+
+		dbg_break();
+	}
+
+	xml_node Root = Document.child("Shop");
+	for (xml_node Node : Root)
+	{
+		SShopEntry Entry;
+		Entry.m_ID = Node.attribute("ID").as_int(-1);
+		Entry.m_Cost = Node.attribute("Cost").as_int(-1);
+		Entry.m_Level = Node.attribute("Level").as_int(-1);
+
+		m_vShopItems.push_back(Entry);
 	}
 }
 
@@ -215,7 +274,7 @@ void CMMOCore::OnMapBotPoint(vec2 Pos, const char *pPointName)
 
 	// Search for bot data
 	char aBuf[256];
-	for (SBotData &Data : m_vBotDatas)
+	for (SBotData &Data : m_vBotsData)
 	{
 		str_format(aBuf, sizeof(aBuf), "Bot%s", Data.m_aSpawnPointName);
 		if (!str_comp(aBuf, pPointName))
@@ -693,7 +752,7 @@ int CMMOCore::GetPlusDamage(int ClientID)
 
 int CMMOCore::ArmorColor(int ItemID)
 {
-	for(SArmorData Armor : m_vArmorDatas)
+	for(SArmorData Armor : m_vArmorsData)
 	{
 		if (Armor.m_BodyID == ItemID)
 			return Armor.m_ColorBody;
@@ -709,7 +768,7 @@ int CMMOCore::ArmorHealth(int ItemID)
 	if (ItemID == -1)
 		return 0;
 
-	for(SArmorData Armor : m_vArmorDatas)
+	for(SArmorData Armor : m_vArmorsData)
 	{
 		if (Armor.m_BodyID == ItemID || Armor.m_FeetID == ItemID)
 			return Armor.m_Health;
@@ -720,7 +779,7 @@ int CMMOCore::ArmorHealth(int ItemID)
 
 int CMMOCore::ArmorDefense(int ItemID)
 {
-	for(SArmorData Armor : m_vArmorDatas)
+	for(SArmorData Armor : m_vArmorsData)
 	{
 		if (Armor.m_BodyID == ItemID || Armor.m_FeetID == ItemID)
 			return Armor.m_Armor;
@@ -762,13 +821,15 @@ void CMMOCore::ResetTeeInfo(int ClientID)
 		pPly->m_pPet = new CDummyBase(GameWorld(), pChr->m_Pos, DUMMY_TYPE_PET, DUMMY_AI_TYPE_PET);
 		pPly->m_pPet->SetName("Pet");
 		pPly->m_pPet->SetClan("");
-		pPly->m_pPet->SetTeeInfo({"default", 1, 255, 255});
+		pPly->m_pPet->SetTeeInfo(PetTeeInfo(EquippedPet));
 		pPly->m_pPet->m_Level = 1;
 		pPly->m_pPet->m_MaxHealth = 1000000000;
 		pPly->m_pPet->m_MaxArmor = 1000000000;
-		pPly->m_pPet->m_Damage = 1;
+		pPly->m_pPet->m_Damage = 3;
 
-		((CPet *)pPly->m_pPet->DummyController())->m_Owner = ClientID;
+		CPet *pPet = (CPet *)pPly->m_pPet->DummyController();
+		pPet->m_Owner = ClientID;
+		pPet->m_ItemID = EquippedPet;
 
 		// Respawn bot with new stats
 		pPly->m_pPet->Spawn();
@@ -807,4 +868,13 @@ void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)
 	}
 
 	GiveItem(ClientID, ItemID, Count);
+}
+
+CTeeInfo CMMOCore::PetTeeInfo(int ItemID)
+{
+	for(auto &PetData : m_vPetsData)
+		if(PetData.m_ID == ItemID)
+			return PetData.m_TeeInfo;
+
+	return {"default", 1, 255, 255};
 }

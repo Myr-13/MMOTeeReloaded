@@ -49,7 +49,7 @@ void CLayers::Init(class IKernel *pKernel)
 		char aGroupName[12];
 		IntsToStr(pGroup->m_aName, 3, aGroupName);
 
-		if (!str_comp(aGroupName, "#Entities"))
+		if(str_find_nocase(aGroupName, "#Entities"))
 			m_pEntitiesGroup = pGroup;
 		else
 		{

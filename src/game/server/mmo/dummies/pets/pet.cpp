@@ -11,6 +11,13 @@ CPet::CPet()
 	m_Target = -1;
 	m_Dir = 0;
 	m_OldDir = 0;
+	m_LastJumpTick = 0;
+}
+
+void CPet::Init()
+{
+	m_pDummyBase->Core()->m_HookHitDisabled = true;
+	m_pDummyBase->Core()->m_CollisionDisabled = true;
 }
 
 void CPet::Move()
@@ -29,10 +36,10 @@ void CPet::Move()
 
 	// Jump
 	float YDist = pChr->m_Pos.y - m_Pos.y;
-	if(YDist < -64 && YDist > -96)
+	if(YDist < -64 && TicksPassed(15))
 		Jump();
 
-	// Teleport if pet away
+	// Teleport if pet too far
 	float dist = distance(m_Pos, pChr->m_Pos);
 	if(dist > 32.f * 32.f)
 	{
@@ -57,29 +64,28 @@ void CPet::Move()
 
 void CPet::TargetMobs()
 {
-	CEntity *pEnt = GameWorld()->ClosestEntity(m_Pos, 320.f, CGameWorld::ENTTYPE_DUMMY, m_pDummyBase);
+	CDummyBase *pEnt = (CDummyBase *)GameWorld()->ClosestEntity(m_Pos, 640.f, CGameWorld::ENTTYPE_DUMMY, m_pDummyBase);
 	if(!pEnt)
 		return;
-	if(!((CDummyBase *)pEnt)->IsAlive())
+	if(!pEnt->IsAlive())
 		return;
+	if(pEnt->GetDummyType() == DUMMY_TYPE_PET)
+		return;
+	if(Collision()->IntersectLine(m_Pos, pEnt->m_Pos, 0x0, 0x0))
+		return;
+
+	vec2 PredPos = pEnt->Core()->m_Pos + pEnt->Core()->m_Vel * 3.6f;
 
 	// Fire
 	SetWeapon(WEAPON_GUN);
-	SetAim(pEnt->m_Pos - m_Pos);
+	SetAim(PredPos - m_Pos);
 
-	if(Server()->Tick() % 8 == 0)
+	if(TicksPassed(8))
 		Fire();
 }
 
 void CPet::Tick()
 {
-	// Meh
-	if(!m_pDummyBase->Core()->m_CollisionDisabled)
-	{
-		m_pDummyBase->Core()->m_HookHitDisabled = true;
-		m_pDummyBase->Core()->m_CollisionDisabled = true;
-	}
-
 	// Some health :D
 	m_pDummyBase->m_Health = 10000000;
 	m_pDummyBase->m_NoDamage = true;
@@ -92,6 +98,7 @@ void CPet::Tick()
 		{
 			m_pDummyBase->m_MarkedForDestroy = true;
 			m_Owner = -1;
+
 			return;
 		}
 	}

@@ -1,11 +1,13 @@
 #include "dummy_controller.h"
-
 #include "dummy_base.h"
+
+#include <engine/server.h>
 
 class CGameContext *CDummyController::GameServer() { return m_pDummyBase->GameServer(); }
 class IServer *CDummyController::Server() { return m_pDummyBase->Server(); }
 class CGameWorld *CDummyController::GameWorld() { return m_pDummyBase->GameWorld(); }
 class CCollision *CDummyController::Collision() { return m_pDummyBase->Collision(); }
+class CMMOCore *CDummyController::MMOCore() { return m_pDummyBase->MMOCore(); }
 
 enum
 {
@@ -21,10 +23,14 @@ void CDummyController::SetMove(int Dir) { m_pDummyBase->m_Input.m_Direction = Di
 void CDummyController::Fire() { m_pDummyBase->m_Input.m_Fire = 1; }
 void CDummyController::Hook() { m_pDummyBase->m_Input.m_Hook = 1; }
 void CDummyController::Jump() { m_pDummyBase->m_Input.m_Jump = 1; }
+void CDummyController::NoFire() { m_pDummyBase->m_Input.m_Fire = 0; }
+void CDummyController::NoHook() { m_pDummyBase->m_Input.m_Hook = 0; }
+void CDummyController::NoJump() { m_pDummyBase->m_Input.m_Jump = 0; }
 void CDummyController::SetWeapon(int Weapon) { m_pDummyBase->m_Input.m_WantedWeapon = Weapon; }
 void CDummyController::SetAimX(int X){ m_pDummyBase->m_Input.m_TargetX = X; }
 void CDummyController::SetAimY(int Y) { m_pDummyBase->m_Input.m_TargetY = Y; }
 void CDummyController::SetAim(vec2 Pos) { SetAim(Pos.x, Pos.y); }
+bool CDummyController::TicksPassed(int Ticks) { return Server()->Tick() % Ticks == 0; }
 void CDummyController::SetAim(int X, int Y)
 {
 	SetAimX(X);

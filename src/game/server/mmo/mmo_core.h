@@ -5,54 +5,13 @@
 #include <engine/shared/protocol.h>
 #include <game/server/teeinfo.h>
 
+#include "mmo_core_structs.h"
+
 #include "components/account_manager.h"
 
 enum
 {
 	BOT_IDS_OFFSET = 24
-};
-
-struct SShopEntry
-{
-	int m_ID;
-	int m_Cost;
-	int m_Level;
-};
-
-struct SBotData
-{
-	int m_ID;
-	char m_aName[MAX_NAME_LENGTH];
-	CTeeInfo m_TeeInfo;
-	char m_aSpawnPointName[16];
-	int m_Level;
-	int m_HP;
-	int m_Armor;
-	int m_Damage;
-	int m_AIType;
-};
-
-struct SArmorData
-{
-	int m_BodyID;
-	int m_FeetID;
-	int m_ColorBody;
-	int m_ColorFeet;
-	int m_Health;
-	int m_Armor;
-};
-
-struct SCraftIngredient
-{
-	int m_ID;
-	int m_Count;
-};
-
-struct SCraftData
-{
-	int m_Type;
-	int m_ID;
-	std::vector<SCraftIngredient> m_vIngredients;
 };
 
 class CGameContext;
@@ -65,9 +24,10 @@ class CMMOCore
 
 	std::vector<SInvItem> m_vItems;
 	std::vector<SShopEntry> m_vShopItems;
-	std::vector<SBotData> m_vBotDatas;
-	std::vector<SArmorData> m_vArmorDatas;
+	std::vector<SBotData> m_vBotsData;
+	std::vector<SArmorData> m_vArmorsData;
 	std::vector<SCraftData> m_vCrafts;
+	std::vector<SPetData> m_vPetsData;
 
 	SInvItem *GetItem(int ItemID);
 
@@ -77,6 +37,14 @@ public:
 	class CGameWorld *GameWorld();
 
 	void Init(CGameContext *pGameServer);
+
+	// Functions for load data from xml
+	void InitItems();
+	void InitMobs();
+	void InitArmor();
+	void InitPets();
+	void InitCrafts();
+	void InitShop();
 
 	void GetProgressBar(char *pStr, int StrSize, char Filler, char Empty, int Num, int MaxNum);
 
@@ -128,6 +96,9 @@ public:
 	// Craft
 	void CraftItem(int ClientID, int ItemID, int Count);
 	std::vector<SCraftData> &GetCrafts() { return m_vCrafts; };
+
+	// Pet
+	CTeeInfo PetTeeInfo(int ItemID);
 };
 
 #endif // GAME_SERVER_MMO_MMO_CORE_H

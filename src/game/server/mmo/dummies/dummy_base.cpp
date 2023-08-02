@@ -50,7 +50,10 @@ CDummyBase::CDummyBase(CGameWorld *pWorld, vec2 Pos, int DummyType, int DummyAIT
 	}
 
 	if (m_pDummyController)
+	{
 		m_pDummyController->m_pDummyBase = this;
+		m_pDummyController->Init();
+	}
 
 	Spawn();
 }
@@ -447,7 +450,7 @@ void CDummyBase::Snap(int SnappingClient)
 
 	pDDNetCharacter->m_Flags = 0;
 	if(m_DummyType == DUMMY_TYPE_PET)
-		pDDNetCharacter->m_Flags = CHARACTERFLAG_COLLISION_DISABLED | CHARACTERFLAG_HOOK_HIT_DISABLED;
+		pDDNetCharacter->m_Flags = CHARACTERFLAG_SOLO;
 
 	pDDNetCharacter->m_FreezeEnd = 0;
 	pDDNetCharacter->m_Jumps = m_Core.m_Jumps;

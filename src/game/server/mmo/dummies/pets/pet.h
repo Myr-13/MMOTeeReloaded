@@ -10,6 +10,7 @@ class CPet : public CDummyController
 
 	int m_OldDir;
 	vec2 m_OldPos;
+	int m_LastJumpTick;
 
 	// Target player
 	// Mob will always attack mobs
@@ -22,8 +23,10 @@ public:
 	CPet();
 
 	int m_Owner;
+	int m_ItemID;
 
-	virtual void Tick();
+	void Tick() override;
+	void Init() override;
 };
 
 #endif // GAME_SERVER_MMO_DUMMIES_PETS_PET_H

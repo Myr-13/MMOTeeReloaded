@@ -17,6 +17,7 @@ protected:
 	class IServer *Server();
 	class CGameWorld *GameWorld();
 	class CCollision *Collision();
+	class CMMOCore *MMOCore();
 
 	void MoveLeft();
 	void MoveNone();
@@ -26,6 +27,9 @@ protected:
 	void Fire();
 	void Hook();
 	void Jump();
+	void NoFire();
+	void NoHook();
+	void NoJump();
 	void SetWeapon(int Weapon);
 
 	void SetAimX(int X);
@@ -35,7 +39,10 @@ protected:
 
 	void ResetInput();
 
-	virtual void Tick() {};
+	bool TicksPassed(int Ticks);
+
+	virtual void Tick() {}
+	virtual void Init() {}
 
 public:
 	virtual ~CDummyController() = default;

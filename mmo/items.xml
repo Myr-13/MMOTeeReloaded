@@ -116,4 +116,12 @@
 
     <!-- Pets -->
     <Item ID="86" Type="8" Rarity="0" Name="Mini slime"/>
+    <Item ID="87" Type="8" Rarity="4" Name="Igor"/>
+    <Item ID="87" Type="8" Rarity="1" Name="Dolphin"/>
+    <Item ID="87" Type="8" Rarity="1" Name="Monkey"/>
+    <Item ID="87" Type="8" Rarity="1" Name="Tiger"/>
+    <Item ID="87" Type="8" Rarity="2" Name="Mithril golem"/>
+    <Item ID="87" Type="8" Rarity="2" Name="Phoenix"/>
+    <Item ID="87" Type="8" Rarity="3" Name="Dragon"/>
+    <Item ID="87" Type="8" Rarity="4" Name="Stone"/>
 </Items>
