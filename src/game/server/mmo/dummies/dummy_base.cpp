@@ -168,7 +168,7 @@ void CDummyBase::FireWeapon()
 	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_LASER)
 		FullAuto = true;
 
-	bool WillFire = (m_Input.m_Fire & 1) && !(m_PrevInput.m_Fire & 1);
+	bool WillFire = (m_Input.m_Fire & 1) && (!(m_PrevInput.m_Fire & 1) || FullAuto);
 	if (!WillFire)
 		return;
 
@@ -201,7 +201,9 @@ void CDummyBase::FireWeapon()
 			LifeTime, // Span
 			false, // Freeze
 			(Weapon == WEAPON_GRENADE), // Explosive
-			-1 // SoundImpact
+			-1, // SoundImpact
+			false, // BigBoom
+			m_Damage // PlusDamage
 		);
 
 		// Spread
@@ -223,7 +225,9 @@ void CDummyBase::FireWeapon()
 				LifeTime, // Span
 				false, // Freeze
 				(Weapon == WEAPON_GRENADE), // Explosive
-				-1 // SoundImpact
+				-1, // SoundImpact
+				false, // BigBoom
+				m_Damage // PlusDamage
 			);
 		}
 
@@ -308,7 +312,8 @@ void CDummyBase::FireWeapon()
 			vec2 Temp = pTarget->Core()->m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
 			//Temp = ClampVel(pTarget->m_MoveRestrictions, Temp);
 			Temp -= pTarget->Core()->m_Vel;
-			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, 3, -1, m_Core.m_ActiveWeapon);
+			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, 3 + m_Damage,
+				-1, m_Core.m_ActiveWeapon);
 
 			Hits++;
 		}

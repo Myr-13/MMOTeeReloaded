@@ -18,7 +18,8 @@ public:
 		bool Freeze,
 		bool Explosive,
 		int SoundImpact,
-		bool BigBoom = false);
+		bool BigBoom = false,
+		int PlusDamage = 0);
 
 	vec2 GetPos(float Time);
 	void FillInfo(CNetObj_Projectile *pProj);
@@ -39,9 +40,9 @@ private:
 	int m_SoundImpact;
 	int m_StartTick;
 	bool m_Explosive;
+	int m_PlusDamage;
 
 	// DDRace
-
 	int m_Bouncing;
 	bool m_Freeze;
 	int m_TuneZone;

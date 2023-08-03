@@ -24,7 +24,8 @@ CProjectile::CProjectile(
 	bool Freeze,
 	bool Explosive,
 	int SoundImpact,
-	bool BigBoom) :
+	bool BigBoom,
+	int PlusDamage) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Type = Type;
@@ -39,6 +40,7 @@ CProjectile::CProjectile(
 
 	m_BigBoom = BigBoom;
 	m_Freeze = Freeze;
+	m_PlusDamage = PlusDamage;
 
 	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
 
@@ -91,8 +93,8 @@ void CProjectile::Tick()
 	vec2 ColPos;
 	vec2 NewPos;
 	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &ColPos, &NewPos);
-	CCharacter *pOwnerChar = 0;
 
+	CCharacter *pOwnerChar = 0;
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
@@ -177,7 +179,7 @@ void CProjectile::Tick()
 		}
 		else if(m_Type == WEAPON_GUN)
 		{
-			int Dmg = g_pData->m_Weapons.m_Gun.m_pBase->m_Damage;
+			int Dmg = g_pData->m_Weapons.m_Gun.m_pBase->m_Damage + m_PlusDamage;
 			if (pTargetChr)
 				pTargetChr->TakeDamage(vec2(0, 0), Dmg, m_Owner, WEAPON_GUN);
 			if (pTargetDummy)
@@ -187,7 +189,7 @@ void CProjectile::Tick()
 		}
 		else if(m_Type == WEAPON_SHOTGUN)
 		{
-			int Dmg = g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage;
+			int Dmg = g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage + m_PlusDamage;
 			if (pTargetChr)
 				pTargetChr->TakeDamage(vec2(0, 0), Dmg, m_Owner, WEAPON_SHOTGUN);
 			if (pTargetDummy)

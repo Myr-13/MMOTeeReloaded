@@ -1,9 +1,57 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Pets>
-    <!-- Mini slime -->
-    <Pet ID="86">
-        <TeeInfo Skin="ghost" UseCustomColors="1" ColorBody="5504798" ColorFeet="5504798"/>
-        <Stats Damage="3"/>
-        <PlyStats Health="100" Armor="0"/>
-    </Pet>
+	<!-- Mini slime -->
+	<Pet ID="86">
+		<TeeInfo Skin="ghost" UseCustomColors="1" ColorBody="5504798" ColorFeet="5504798"/>
+		<Stats Damage="3"/>
+		<PlyStats Health="100" Armor="0"/>
+	</Pet>
+	<!-- Igor -->
+	<Pet ID="87">
+		<TeeInfo Skin="{owner}" UseCustomColors="1" ColorBody="255" ColorFeet="255"/>
+		<Stats Damage="100"/>
+		<PlyStats Health="1000" Armor="500"/>
+	</Pet>
+	<!-- Dolphin -->
+	<Pet ID="88">
+		<TeeInfo Skin="Sacabafish" UseCustomColors="1" ColorBody="9830174" ColorFeet="255"/>
+		<Stats Damage="10"/>
+		<PlyStats Health="250" Armor="50"/>
+	</Pet>
+	<!-- Monkey -->
+	<Pet ID="89">
+		<TeeInfo Skin="Apish Coke" UseCustomColors="0" ColorBody="255" ColorFeet="255"/>
+		<Stats Damage="10"/>
+		<PlyStats Health="250" Armor="50"/>
+	</Pet>
+	<!-- Tiger -->
+	<Pet ID="90">
+		<TeeInfo Skin="tiger" UseCustomColors="0" ColorBody="255" ColorFeet="255"/>
+		<Stats Damage="60"/>
+		<PlyStats Health="500" Armor="250"/>
+	</Pet>
+	<!-- Mithril golem -->
+	<Pet ID="91">
+		<TeeInfo Skin="twintri" UseCustomColors="1" ColorBody="6881054" ColorFeet="6881054"/>
+		<Stats Damage="40"/>
+		<PlyStats Health="400" Armor="150"/>
+	</Pet>
+	<!-- Phoenix -->
+	<Pet ID="92">
+		<TeeInfo Skin="nanami" UseCustomColors="1" ColorBody="1703710" ColorFeet="1703710"/>
+		<Stats Damage="150"/>
+		<PlyStats Health="1500" Armor="800"/>
+	</Pet>
+	<!-- Dragon -->
+	<Pet ID="93">
+		<TeeInfo Skin="dragon" UseCustomColors="1" ColorBody="5504798" ColorFeet="5504798"/>
+		<Stats Damage="300"/>
+		<PlyStats Health="2000" Armor="1200"/>
+	</Pet>
+	<!-- Stone -->
+	<Pet ID="94">
+		<TeeInfo Skin="default" UseCustomColors="1" ColorBody="100" ColorFeet="100"/>
+		<Stats Damage="9999"/>
+		<PlyStats Health="2500" Armor="1500"/>
+	</Pet>
 </Pets>

@@ -31,6 +31,8 @@ class CMMOCore
 
 	SInvItem *GetItem(int ItemID);
 
+	void CreatePet(int ClientID, int ItemID);
+
 public:
 	CGameContext *GameServer() { return m_pGameServer; }
 	class IServer *Server();
@@ -98,7 +100,7 @@ public:
 	std::vector<SCraftData> &GetCrafts() { return m_vCrafts; };
 
 	// Pet
-	CTeeInfo PetTeeInfo(int ItemID);
+	SPetData GetPetData(int ItemID);
 };
 
 #endif // GAME_SERVER_MMO_MMO_CORE_H

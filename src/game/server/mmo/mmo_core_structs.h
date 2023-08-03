@@ -51,6 +51,9 @@ struct SPetData
 {
 	int m_ID;
 	CTeeInfo m_TeeInfo;
+	int m_Damage;
+	int m_PlusHealth;
+	int m_PlusArmor;
 };
 
 #endif // GAME_SERVER_MMO_MMO_CORE_STRUCTS_H

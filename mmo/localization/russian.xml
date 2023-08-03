@@ -66,5 +66,5 @@
     <Key Text="► Add money to bank">► Добавить деньги в казну</Key>
     <Key Text="Reason = count">Причина = количество</Key>
     <Key Text="☞ ☑ Put off">☞ ☑ Снять</Key>
-    <Key Text="☞ ☐ Put on">☞ ☑ Надеть</Key>
+    <Key Text="☞ ☐ Put on">☞ ☐ Надеть</Key>
 </Language>

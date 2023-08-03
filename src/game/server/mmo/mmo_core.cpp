@@ -159,11 +159,21 @@ void CMMOCore::InitPets()
 		SPetData Entry;
 		Entry.m_ID = Node.attribute("ID").as_int(-1);
 
+		// Tee info node
 		xml_node TeeInfo = Node.child("TeeInfo");
 		str_copy(Entry.m_TeeInfo.m_aSkinName, TeeInfo.attribute("Skin").as_string());
 		Entry.m_TeeInfo.m_UseCustomColor = TeeInfo.attribute("UseCustomColors").as_int();
 		Entry.m_TeeInfo.m_ColorBody = TeeInfo.attribute("ColorBody").as_int();
 		Entry.m_TeeInfo.m_ColorFeet = TeeInfo.attribute("ColorFeet").as_int();
+
+		// Pet stats node
+		xml_node Stats = Node.child("Stats");
+		Entry.m_Damage = Stats.attribute("Damage").as_int();
+
+		// Player stats node
+		xml_node PlyStats = Node.child("PlyStats");
+		Entry.m_PlusHealth = PlyStats.attribute("Health").as_int();
+		Entry.m_PlusArmor = PlyStats.attribute("Armor").as_int();
 
 		m_vPetsData.push_back(Entry);
 	}
@@ -817,23 +827,7 @@ void CMMOCore::ResetTeeInfo(int ClientID)
 	}
 
 	if(!pPly->m_pPet && EquippedPet != -1)
-	{
-		pPly->m_pPet = new CDummyBase(GameWorld(), pChr->m_Pos, DUMMY_TYPE_PET, DUMMY_AI_TYPE_PET);
-		pPly->m_pPet->SetName("Pet");
-		pPly->m_pPet->SetClan("");
-		pPly->m_pPet->SetTeeInfo(PetTeeInfo(EquippedPet));
-		pPly->m_pPet->m_Level = 1;
-		pPly->m_pPet->m_MaxHealth = 1000000000;
-		pPly->m_pPet->m_MaxArmor = 1000000000;
-		pPly->m_pPet->m_Damage = 3;
-
-		CPet *pPet = (CPet *)pPly->m_pPet->DummyController();
-		pPet->m_Owner = ClientID;
-		pPet->m_ItemID = EquippedPet;
-
-		// Respawn bot with new stats
-		pPly->m_pPet->Spawn();
-	}
+		CreatePet(ClientID, EquippedPet);
 }
 
 void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)
@@ -870,11 +864,34 @@ void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)
 	GiveItem(ClientID, ItemID, Count);
 }
 
-CTeeInfo CMMOCore::PetTeeInfo(int ItemID)
+SPetData CMMOCore::GetPetData(int ItemID)
 {
 	for(auto &PetData : m_vPetsData)
 		if(PetData.m_ID == ItemID)
-			return PetData.m_TeeInfo;
+			return PetData;
 
-	return {"default", 1, 255, 255};
+	return {-1, {"", 1, 255, 255}, 1};
+}
+
+void CMMOCore::CreatePet(int ClientID, int ItemID)
+{
+	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
+	CCharacter *pChr = pPly->GetCharacter();
+	SPetData PetData = GetPetData(ItemID);
+
+	pPly->m_pPet = new CDummyBase(GameWorld(), pChr->m_Pos, DUMMY_TYPE_PET, DUMMY_AI_TYPE_PET);
+	pPly->m_pPet->SetName(GetItemName(ItemID));
+	pPly->m_pPet->SetClan(Server()->ClientName(ClientID));
+	pPly->m_pPet->SetTeeInfo(PetData.m_TeeInfo);
+	pPly->m_pPet->m_Level = 1;
+	pPly->m_pPet->m_MaxHealth = 1000000000;
+	pPly->m_pPet->m_MaxArmor = 1000000000;
+	pPly->m_pPet->m_Damage = PetData.m_Damage;
+
+	CPet *pPet = (CPet *)pPly->m_pPet->DummyController();
+	pPet->m_Owner = ClientID;
+	pPet->m_ItemID = ItemID;
+
+	// Respawn bot with new stats
+	pPly->m_pPet->Spawn();
 }
