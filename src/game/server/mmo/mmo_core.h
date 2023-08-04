@@ -40,6 +40,10 @@ public:
 
 	void Init(CGameContext *pGameServer);
 
+	void GetProgressBar(char *pStr, int StrSize, char Filler, char Empty, int Num, int MaxNum);
+	int GetBonusHealth(int ClientID);
+	int GetBonusArmor(int ClientID);
+
 	// Functions for load data from xml
 	void InitItems();
 	void InitMobs();
@@ -47,8 +51,6 @@ public:
 	void InitPets();
 	void InitCrafts();
 	void InitShop();
-
-	void GetProgressBar(char *pStr, int StrSize, char Filler, char Empty, int Num, int MaxNum);
 
 	// Dummies / Bots
 	int GetNextBotSnapID(int ClientID);

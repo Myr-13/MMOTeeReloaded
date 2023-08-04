@@ -849,3 +849,25 @@ void CMMOCore::CreatePet(int ClientID, int ItemID)
 	// Respawn bot with new stats
 	pPly->m_pPet->Spawn();
 }
+
+int CMMOCore::GetBonusHealth(int ClientID)
+{
+	int Health = 0;
+
+	Health += ArmorHealth(GetEquippedItem(ClientID, ITEM_TYPE_ARMOR_BODY));
+	Health += ArmorHealth(GetEquippedItem(ClientID, ITEM_TYPE_ARMOR_FEET));
+	Health += GetPetData(GetEquippedItem(ClientID, ITEM_TYPE_PET)).m_PlusHealth;
+
+	return Health;
+}
+
+int CMMOCore::GetBonusArmor(int ClientID)
+{
+	int Armor = 0;
+
+	Armor += ArmorDefense(GetEquippedItem(ClientID, ITEM_TYPE_ARMOR_BODY));
+	Armor += ArmorDefense(GetEquippedItem(ClientID, ITEM_TYPE_ARMOR_FEET));
+	Armor += GetPetData(GetEquippedItem(ClientID, ITEM_TYPE_PET)).m_PlusArmor;
+
+	return Armor;
+}

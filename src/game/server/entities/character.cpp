@@ -104,10 +104,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_MaxArmor = 0;
 
 	m_MaxHealth += pPlayer->m_AccUp.m_Health * 40;
-	m_MaxHealth += MMOCore()->ArmorHealth(MMOCore()->GetEquippedItem(m_pPlayer->GetCID(), ITEM_TYPE_ARMOR_BODY));
-	m_MaxHealth += MMOCore()->ArmorHealth(MMOCore()->GetEquippedItem(m_pPlayer->GetCID(), ITEM_TYPE_ARMOR_FEET));
-	m_MaxArmor += MMOCore()->ArmorDefense(MMOCore()->GetEquippedItem(m_pPlayer->GetCID(), ITEM_TYPE_ARMOR_BODY));
-	m_MaxArmor += MMOCore()->ArmorDefense(MMOCore()->GetEquippedItem(m_pPlayer->GetCID(), ITEM_TYPE_ARMOR_FEET));
+	m_MaxHealth += MMOCore()->GetBonusHealth(m_pPlayer->GetCID());
+	m_MaxArmor += MMOCore()->GetBonusArmor(m_pPlayer->GetCID());
 
 	m_Health = m_MaxHealth;
 	m_Armor = m_MaxArmor;
