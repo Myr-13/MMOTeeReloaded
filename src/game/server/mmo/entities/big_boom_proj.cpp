@@ -20,7 +20,7 @@ void CBigBoomProjectile::Tick()
 	m_Vel.x *= 0.98f;
 	Collision()->MoveBox(&m_Pos, &m_Vel, vec2(5, 5), 0.5f);
 
-	if (Server()->Tick() > m_BoomTick)
+	if(Server()->Tick() > m_BoomTick)
 	{
 		GameServer()->CreateExplosion(m_Pos, m_Owner, WEAPON_GRENADE, false, 0);
 		Destroy();
@@ -29,7 +29,7 @@ void CBigBoomProjectile::Tick()
 
 void CBigBoomProjectile::Snap(int SnappingClient)
 {
-	if (NetworkClipped(SnappingClient))
+	if(NetworkClipped(SnappingClient))
 		return;
 
 	CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem<CNetObj_Projectile>(GetID()));

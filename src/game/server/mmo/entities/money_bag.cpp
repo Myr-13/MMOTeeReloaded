@@ -18,11 +18,11 @@ CMoneyBag::CMoneyBag(CGameWorld *pWorld, vec2 Pos) :
 
 void CMoneyBag::Tick()
 {
-	if (Server()->Tick() < m_RespawnTick)
+	if(Server()->Tick() < m_RespawnTick)
 		return;
 
 	CCharacter *pChr = GameWorld()->ClosestCharacter(m_Pos, GetProximityRadius(), 0x0);
-	if (pChr)
+	if(pChr)
 	{
 		int Count = rand() % 5 + 1;
 		int Bonus = fmin((Server()->Tick() - m_RespawnTick) / (60 * 60), 30);
@@ -38,10 +38,10 @@ void CMoneyBag::Tick()
 
 void CMoneyBag::Snap(int SnappingClient)
 {
-	if (NetworkClipped(SnappingClient))
+	if(NetworkClipped(SnappingClient))
 		return;
 
-	if (Server()->Tick() < m_RespawnTick)
+	if(Server()->Tick() < m_RespawnTick)
 		return;
 
 	CNetObj_Projectile *pPickup = Server()->SnapNewItem<CNetObj_Projectile>(GetID());

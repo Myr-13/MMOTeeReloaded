@@ -17,10 +17,10 @@ CBallEffect::~CBallEffect()
 
 void CBallEffect::Snap(int SnappingClient)
 {
-	if (NetworkClipped(SnappingClient))
+	if(NetworkClipped(SnappingClient))
 		return;
 
-	for (int i = 0; i < 2; i++)
+	for(int i = 0; i < 2; i++)
 	{
 		CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem<CNetObj_Projectile>((i == 0) ? GetID() : m_ID2));
 		if(!pObj)

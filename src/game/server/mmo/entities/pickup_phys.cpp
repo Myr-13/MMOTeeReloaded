@@ -29,10 +29,10 @@ void CPickupPhys::Tick()
 	// Pickup handle
 	CCharacter *pChr = GameWorld()->ClosestCharacter(m_Pos, GetProximityRadius(), 0x0);
 
-	if (pChr)
+	if(pChr)
 	{
 		CPlayer *pPly = pChr->GetPlayer();
-		if (m_Type == PICKUP_PHYS_TYPE_XP)
+		if(m_Type == PICKUP_PHYS_TYPE_XP)
 		{
 			pPly->AddEXP(m_Count);
 			GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
@@ -40,7 +40,7 @@ void CPickupPhys::Tick()
 
 			return;
 		}
-		else if (m_Type == PICKUP_PHYS_TYPE_MONEY)
+		else if(m_Type == PICKUP_PHYS_TYPE_MONEY)
 		{
 			pPly->AddMoney(m_Count);
 			GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
@@ -50,18 +50,18 @@ void CPickupPhys::Tick()
 		}
 	}
 
-	if (m_DestroyTick < Server()->Tick())
+	if(m_DestroyTick < Server()->Tick())
 		Destroy();
 }
 
 void CPickupPhys::Snap(int SnappingClient)
 {
-	if (NetworkClipped(SnappingClient))
+	if(NetworkClipped(SnappingClient))
 		return;
 
 	int DeadTick = m_DestroyTick - Server()->Tick();
 
-	if (DeadTick < 150 && DeadTick % 50 < 25)
+	if(DeadTick < 150 && DeadTick % 50 < 25)
 		return;
 
 	CNetObj_Pickup *pPickup = Server()->SnapNewItem<CNetObj_Pickup>(GetID());
@@ -71,11 +71,11 @@ void CPickupPhys::Snap(int SnappingClient)
 	pPickup->m_X = (int)m_Pos.x;
 	pPickup->m_Y = (int)m_Pos.y;
 
-	if (m_Type == PICKUP_PHYS_TYPE_XP)
+	if(m_Type == PICKUP_PHYS_TYPE_XP)
 		pPickup->m_Type = POWERUP_ARMOR;
-	else if (m_Type == PICKUP_PHYS_TYPE_MONEY)
+	else if(m_Type == PICKUP_PHYS_TYPE_MONEY)
 		pPickup->m_Type = POWERUP_HEALTH;
-	else if (m_Type == PICKUP_PHYS_TYPE_ITEM)
+	else if(m_Type == PICKUP_PHYS_TYPE_ITEM)
 		pPickup->m_Type = POWERUP_WEAPON;
 	pPickup->m_Subtype = 0;
 }

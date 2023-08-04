@@ -25,7 +25,7 @@ xml_document OpenXML(const char *pName)
 	xml_document Document;
 	xml_parse_result ParseResult = Document.load_file(aBuf);
 
-	if (!ParseResult)
+	if(!ParseResult)
 	{
 		dbg_msg("xml", "source file 'mmo/%s' parsed with errors!", pName);
 		dbg_msg("xml", "error: %s", ParseResult.description());
@@ -51,19 +51,10 @@ void CMMOCore::Init(CGameContext *pGameServer)
 
 void CMMOCore::InitItems()
 {
-	xml_document Document;
-	xml_parse_result ParseResult = Document.load_file("mmo/items.xml");
+	xml_document Document = OpenXML("items.xml");
+	xml_node Root = Document.first_child();
 
-	if (!ParseResult)
-	{
-		dbg_msg("xml", "source file 'mmo/items.xml' parsed with errors!");
-		dbg_msg("xml", "error: %s", ParseResult.description());
-
-		dbg_break();
-	}
-
-	xml_node Root = Document.child("Items");
-	for (xml_node Node : Root)
+	for(xml_node Node : Root)
 	{
 		SInvItem Item;
 		Item.m_ID = Node.attribute("ID").as_int(-1);
@@ -81,19 +72,10 @@ void CMMOCore::InitItems()
 
 void CMMOCore::InitMobs()
 {
-	xml_document Document;
-	xml_parse_result ParseResult = Document.load_file("mmo/mobs.xml");
+	xml_document Document = OpenXML("mobs.xml");
+	xml_node Root = Document.first_child();
 
-	if (!ParseResult)
-	{
-		dbg_msg("xml", "source file 'mmo/mobs.xml' parsed with errors!");
-		dbg_msg("xml", "error: %s", ParseResult.description());
-
-		dbg_break();
-	}
-
-	xml_node Root = Document.child("Mobs");
-	for (xml_node Node : Root)
+	for(xml_node Node : Root)
 	{
 		xml_node TeeInfo = Node.child("TeeInfo");
 		xml_node Stats = Node.child("Stats");
@@ -119,19 +101,10 @@ void CMMOCore::InitMobs()
 
 void CMMOCore::InitArmor()
 {
-	xml_document Document;
-	xml_parse_result ParseResult = Document.load_file("mmo/armors.xml");
+	xml_document Document = OpenXML("armors.xml");
+	xml_node Root = Document.first_child();
 
-	if (!ParseResult)
-	{
-		dbg_msg("xml", "source file 'mmo/armors.xml' parsed with errors!");
-		dbg_msg("xml", "error: %s", ParseResult.description());
-
-		dbg_break();
-	}
-
-	xml_node Root = Document.child("Armors");
-	for (xml_node Node : Root)
+	for(xml_node Node : Root)
 	{
 		xml_node Body = Node.child("Body");
 		xml_node Feet = Node.child("Feet");
@@ -154,7 +127,7 @@ void CMMOCore::InitPets()
 	xml_document Document = OpenXML("pets.xml");
 	xml_node Root = Document.first_child();
 
-	for (xml_node Node : Root)
+	for(xml_node Node : Root)
 	{
 		SPetData Entry;
 		Entry.m_ID = Node.attribute("ID").as_int(-1);
@@ -181,19 +154,10 @@ void CMMOCore::InitPets()
 
 void CMMOCore::InitCrafts()
 {
-	xml_document Document;
-	xml_parse_result ParseResult = Document.load_file("mmo/crafts.xml");
+	xml_document Document = OpenXML("crafts.xml");
+	xml_node Root = Document.first_child();
 
-	if (!ParseResult)
-	{
-		dbg_msg("xml", "source file 'mmo/crafts.xml' parsed with errors!");
-		dbg_msg("xml", "error: %s", ParseResult.description());
-
-		dbg_break();
-	}
-
-	xml_node Root = Document.child("Crafts");
-	for (xml_node Node : Root)
+	for(xml_node Node : Root)
 	{
 		SCraftData Craft;
 		Craft.m_Type = Node.attribute("Type").as_int(0);
@@ -217,19 +181,10 @@ void CMMOCore::InitCrafts()
 
 void CMMOCore::InitShop()
 {
-	xml_document Document;
-	xml_parse_result ParseResult = Document.load_file("mmo/shop.xml");
+	xml_document Document = OpenXML("shop.xml");
+	xml_node Root = Document.first_child();
 
-	if (!ParseResult)
-	{
-		dbg_msg("xml", "source file 'mmo/shop.xml' parsed with errors!");
-		dbg_msg("xml", "error: %s", ParseResult.description());
-
-		dbg_break();
-	}
-
-	xml_node Root = Document.child("Shop");
-	for (xml_node Node : Root)
+	for(xml_node Node : Root)
 	{
 		SShopEntry Entry;
 		Entry.m_ID = Node.attribute("ID").as_int(-1);
@@ -249,7 +204,7 @@ int CMMOCore::GetNextBotSnapID(int ClientID)
 
 void CMMOCore::ClearBotSnapIDs()
 {
-	for (int &i : m_aBotSnapIDs)
+	for(int &i : m_aBotSnapIDs)
 		i = BOT_IDS_OFFSET;
 }
 
@@ -284,10 +239,10 @@ void CMMOCore::OnMapBotPoint(vec2 Pos, const char *pPointName)
 
 	// Search for bot data
 	char aBuf[256];
-	for (SBotData &Data : m_vBotsData)
+	for(SBotData &Data : m_vBotsData)
 	{
 		str_format(aBuf, sizeof(aBuf), "Bot%s", Data.m_aSpawnPointName);
-		if (!str_comp(aBuf, pPointName))
+		if(!str_comp(aBuf, pPointName))
 		{
 			pBotData = &Data;
 			break;
@@ -295,7 +250,7 @@ void CMMOCore::OnMapBotPoint(vec2 Pos, const char *pPointName)
 	}
 
 	// Check for bot data
-	if (!pBotData)
+	if(!pBotData)
 	{
 		dbg_msg("mmo_core", "unknown bot spawn point: %s. Pos: %f %f", pPointName, Pos.x / 32.f, Pos.y / 32.f);
 		return;
@@ -357,7 +312,7 @@ void CMMOCore::GetProgressBar(char *pStr, int StrSize, char Filler, char Empty, 
 
 	pStr[StrSize - 1] = '\0';
 
-	for (int i = 0; i < c; i++)
+	for(int i = 0; i < c; i++)
 		pStr[i] = ((i + 1 <= b) ? Filler : Empty);
 }
 
@@ -369,7 +324,7 @@ SInvItem *CMMOCore::GetItem(int ItemID)
 
 	// Maybe fix this shit?
 
-	if (it == m_vItems.end())
+	if(it == m_vItems.end())
 		return 0x0;
 	return &*it;
 }
@@ -435,10 +390,10 @@ const char *CMMOCore::GetRarityString(int Rarity)
 
 bool CMMOCore::GiveItem(int ClientID, int ItemID, int Count, int Quality, int Data)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return false;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return false;
 
 	SInvItem Item;
@@ -452,12 +407,11 @@ bool CMMOCore::GiveItem(int ClientID, int ItemID, int Count, int Quality, int Da
 	Item.m_Data = Data;
 
 	int CurrentItemCount = pPly->m_AccInv.ItemCount(ItemID);
-	if (CurrentItemCount == Item.m_MaxCount)
+	if(CurrentItemCount == Item.m_MaxCount)
 		return false;
-	if (Item.m_MaxCount != -1 && CurrentItemCount + Count > Item.m_MaxCount )
-	{
+	if(Item.m_MaxCount != -1 && CurrentItemCount + Count > Item.m_MaxCount )
 		Item.m_Count = Item.m_MaxCount - CurrentItemCount;
-	}
+
 	pPly->m_AccInv.AddItem(Item);
 
 	GameServer()->SendChatLocalize(ClientID, "+%s x%d", GetItemName(ItemID), Count);
@@ -466,20 +420,20 @@ bool CMMOCore::GiveItem(int ClientID, int ItemID, int Count, int Quality, int Da
 
 void CMMOCore::UseItem(int ClientID, int ItemID, int Count)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return;
 
 	int Value = 0;
 	SInvItem Item = pPly->m_AccInv.GetItem(ItemID);
-	if (Item.m_Count == 0)
+	if(Item.m_Count == 0)
 		return;
 	Count = clamp(Count, 1, Item.m_Count);
 
 	// Handle item use
-	switch (ItemID)
+	switch(ItemID)
 	{
 	case ITEM_CARROT:
 	{
@@ -541,9 +495,9 @@ void CMMOCore::UseItem(int ClientID, int ItemID, int Count)
 	}
 
 	// Notify clients
-	if (ItemID >= ITEM_CARROT && ItemID <= ITEM_TOMATO)
+	if(ItemID >= ITEM_CARROT && ItemID <= ITEM_TOMATO)
 		GameServer()->SendChatLocalize(-1, "%s used %s x%d and got %d exp.", Server()->ClientName(ClientID), GetItemName(ItemID), Count, Value);
-	else if (ItemID == ITEM_MONEY_BAG)
+	else if(ItemID == ITEM_MONEY_BAG)
 		GameServer()->SendChatLocalize(-1, "%s used %s x%d and got %d money.", Server()->ClientName(ClientID), GetItemName(ItemID), Count, Value);
 
 	// Delete items from inventory
@@ -552,10 +506,10 @@ void CMMOCore::UseItem(int ClientID, int ItemID, int Count)
 
 void CMMOCore::BuyItem(int ClientID, int ItemID)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return;
 
 	// Get entry
@@ -563,7 +517,7 @@ void CMMOCore::BuyItem(int ClientID, int ItemID)
 		return (e.m_ID == ItemID);
 	});
 
-	if (it == m_vShopItems.end())
+	if(it == m_vShopItems.end())
 		return;
 
 	// Check for level
@@ -574,7 +528,7 @@ void CMMOCore::BuyItem(int ClientID, int ItemID)
 	}
 
 	// Check for money
-	if (pPly->m_AccData.m_Money < it->m_Cost)
+	if(pPly->m_AccData.m_Money < it->m_Cost)
 	{
 		GameServer()->SendChatLocalize(ClientID, "You don't have needed money.");
 		return;
@@ -586,17 +540,17 @@ void CMMOCore::BuyItem(int ClientID, int ItemID)
 
 int CMMOCore::GetEquippedItem(int ClientID, int ItemType)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return -1;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return -1;
 
 	auto it = std::find_if(pPly->m_AccInv.m_vItems.begin(), pPly->m_AccInv.m_vItems.end(), [&](SInvItem i) {
 		return (i.m_Type == ItemType && i.m_Data);
 	});
 
-	if (it == pPly->m_AccInv.m_vItems.end())
+	if(it == pPly->m_AccInv.m_vItems.end())
 		return -1;
 
 	return it->m_ID;
@@ -604,10 +558,10 @@ int CMMOCore::GetEquippedItem(int ClientID, int ItemType)
 
 void CMMOCore::SetEquippedItem(int ClientID, int ItemID, bool Equipped)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return;
 
 	int ItemType = GetItemType(ItemID);
@@ -617,7 +571,7 @@ void CMMOCore::SetEquippedItem(int ClientID, int ItemID, bool Equipped)
 		return (i.m_Type == ItemType && i.m_Data);
 	});
 
-	if (it != pPly->m_AccInv.m_vItems.end())
+	if(it != pPly->m_AccInv.m_vItems.end())
 		it->m_Data = 0; // Put off
 
 	// Put on new things
@@ -625,7 +579,7 @@ void CMMOCore::SetEquippedItem(int ClientID, int ItemID, bool Equipped)
 		return (i.m_ID == ItemID);
 	});
 
-	if (it == pPly->m_AccInv.m_vItems.end())
+	if(it == pPly->m_AccInv.m_vItems.end())
 		return;
 
 	it->m_Data = (int)Equipped;
@@ -636,23 +590,23 @@ void CMMOCore::SetEquippedItem(int ClientID, int ItemID, bool Equipped)
 
 void CMMOCore::DropItem(int ClientID, int ItemID, int Count)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return;
 	CCharacter *pChr = pPly->GetCharacter();
-	if (!pChr)
+	if(!pChr)
 		return;
-	if (IsItemNotDroppable(ItemID))
+	if(IsItemNotDroppable(ItemID))
 		return;
 
 	// Check for item count
 	int ItemCount = pPly->m_AccInv.ItemCount(ItemID);
-	if (Count > ItemCount)
+	if(Count > ItemCount)
 		Count = ItemCount;
 
-	if (Count == 0)
+	if(Count == 0)
 		return;
 
 	// Create item drop
@@ -751,7 +705,7 @@ int CMMOCore::GetPlusDamage(int ClientID)
 	int PlusDamage = pPly->m_AccUp.m_Damage;
 
 	// Crit damage
-	if (rand() % 10 == 0)
+	if(rand() % 10 == 0)
 	{
 		PlusDamage *= 1.5f;
 		PlusDamage += pPly->m_AccInv.ItemCount(ITEM_RARE_HAMMER);
@@ -766,9 +720,9 @@ int CMMOCore::ArmorColor(int ItemID)
 {
 	for(SArmorData Armor : m_vArmorsData)
 	{
-		if (Armor.m_BodyID == ItemID)
+		if(Armor.m_BodyID == ItemID)
 			return Armor.m_ColorBody;
-		else if (Armor.m_FeetID == ItemID)
+		else if(Armor.m_FeetID == ItemID)
 			return Armor.m_ColorFeet;
 	}
 
@@ -777,12 +731,12 @@ int CMMOCore::ArmorColor(int ItemID)
 
 int CMMOCore::ArmorHealth(int ItemID)
 {
-	if (ItemID == -1)
+	if(ItemID == -1)
 		return 0;
 
 	for(SArmorData Armor : m_vArmorsData)
 	{
-		if (Armor.m_BodyID == ItemID || Armor.m_FeetID == ItemID)
+		if(Armor.m_BodyID == ItemID || Armor.m_FeetID == ItemID)
 			return Armor.m_Health;
 	}
 
@@ -793,7 +747,7 @@ int CMMOCore::ArmorDefense(int ItemID)
 {
 	for(SArmorData Armor : m_vArmorsData)
 	{
-		if (Armor.m_BodyID == ItemID || Armor.m_FeetID == ItemID)
+		if(Armor.m_BodyID == ItemID || Armor.m_FeetID == ItemID)
 			return Armor.m_Armor;
 	}
 
@@ -802,7 +756,7 @@ int CMMOCore::ArmorDefense(int ItemID)
 
 void CMMOCore::ResetTeeInfo(int ClientID)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
 	if(!pPly || !pPly->m_LoggedIn)
@@ -834,10 +788,10 @@ void CMMOCore::ResetTeeInfo(int ClientID)
 
 void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)
 {
-	if (ClientID < 0 || ClientID >= MAX_PLAYERS)
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
-	if (!pPly || !pPly->m_LoggedIn)
+	if(!pPly || !pPly->m_LoggedIn)
 		return;
 
 	// Get craft by result id
@@ -845,23 +799,21 @@ void CMMOCore::CraftItem(int ClientID, int ItemID, int Count)
 		return (Craft.m_ID == ItemID);
 	});
 
-	if (it == m_vCrafts.end())
+	if(it == m_vCrafts.end())
 		return;
 
 	// Check for ingredients
-	for (SCraftIngredient Ingredient : it->m_vIngredients)
+	for(SCraftIngredient Ingredient : it->m_vIngredients)
 	{
-		if (pPly->m_AccInv.ItemCount(Ingredient.m_ID) < Ingredient.m_Count * Count)
+		if(pPly->m_AccInv.ItemCount(Ingredient.m_ID) < Ingredient.m_Count * Count)
 		{
 			GameServer()->SendChatLocalize(ClientID, "You don't have needed items.");
 			return;
 		}
 	}
 
-	for (SCraftIngredient Ingredient : it->m_vIngredients)
-	{
+	for(SCraftIngredient Ingredient : it->m_vIngredients)
 		pPly->m_AccInv.RemItem(Ingredient.m_ID, Ingredient.m_Count * Count);
-	}
 
 	GiveItem(ClientID, ItemID, Count);
 }

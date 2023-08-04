@@ -13,8 +13,8 @@ CPickupJob::CPickupJob(CGameWorld *pWorld, vec2 Pos, int Type) :
 	m_State = 3; // 3 is max grow for PICKUP_JOB_TYPE_FARM or "is ready for harvest"
 
 	// Alloc IDs for farm type
-	if (Type == PICKUP_JOB_TYPE_FARM)
-		for (int &i : m_aIDs)
+	if(Type == PICKUP_JOB_TYPE_FARM)
+		for(int &i : m_aIDs)
 			i = Server()->SnapNewID();
 
 	GameWorld()->InsertEntity(this);
@@ -22,8 +22,8 @@ CPickupJob::CPickupJob(CGameWorld *pWorld, vec2 Pos, int Type) :
 
 CPickupJob::~CPickupJob()
 {
-	if (m_Type == PICKUP_JOB_TYPE_FARM)
-		for (int i : m_aIDs)
+	if(m_Type == PICKUP_JOB_TYPE_FARM)
+		for(int i : m_aIDs)
 			Server()->SnapFreeID(i);
 }
 
@@ -31,19 +31,19 @@ void CPickupJob::Damage(int ClientID)
 {
 	// WARNING: SHIT CODE!
 
-	if (m_State == 0)
+	if(m_State == 0)
 		return;
 	CPlayer *pPly = GameServer()->m_apPlayers[ClientID];
 
 	int WorkID = -1;
 	int GainXP = 1;
-	if (m_Type == PICKUP_JOB_TYPE_FARM)
+	if(m_Type == PICKUP_JOB_TYPE_FARM)
 		WorkID = WORK_FARMER;
-	else if (m_Type == PICKUP_JOB_TYPE_MINE)
+	else if(m_Type == PICKUP_JOB_TYPE_MINE)
 	{
 		WorkID = WORK_MINER;
 	}
-	else if (m_Type == PICKUP_JOB_TYPE_MATERIAL) {
+	else if(m_Type == PICKUP_JOB_TYPE_MATERIAL) {
 		GainXP = 10;
 		WorkID = WORK_MATERIAL;
 	}
@@ -65,7 +65,7 @@ void CPickupJob::Damage(int ClientID)
 	GameServer()->SendMMOBroadcast(ClientID, 1.5f, aBuf);
 
 	// If pickup was collected
-	if (m_DestroyProgress >= 100)
+	if(m_DestroyProgress >= 100)
 	{
 		m_State = 0;
 		m_DestroyProgress = 0;
@@ -74,7 +74,7 @@ void CPickupJob::Damage(int ClientID)
 		GameServer()->CreateSound(m_Pos, SOUND_NINJA_HIT);
 
 		// Give items
-		if (m_Type == PICKUP_JOB_TYPE_FARM)
+		if(m_Type == PICKUP_JOB_TYPE_FARM)
 		{
 			// Give vegetables
 			int Item = ITEM_CARROT;
@@ -93,18 +93,18 @@ void CPickupJob::Damage(int ClientID)
 			if (rand() % 40 == 0)
 				MMOCore()->GiveItem(ClientID, ITEM_FARMER_BOX);
 		}
-		else if (m_Type == PICKUP_JOB_TYPE_MINE)
+		else if(m_Type == PICKUP_JOB_TYPE_MINE)
 		{
 			int Level = pPly->m_AccWorks.m_aWorks[WorkID].m_Level;
 			int Item = MMOCore()->GetRandomMinerItemByLevel(Level);
 
 			MMOCore()->GiveItem(ClientID, Item, 1 + ((Item <= ITEM_DIAMOND) ? Level / 15 : 0));
 		}
-		else if (m_Type == PICKUP_JOB_TYPE_WOOD)
+		else if(m_Type == PICKUP_JOB_TYPE_WOOD)
 		{
 			MMOCore()->GiveItem(ClientID, ITEM_WOOD, 1 + rand() % 3);
 		}
-		else if (m_Type == PICKUP_JOB_TYPE_MATERIAL)
+		else if(m_Type == PICKUP_JOB_TYPE_MATERIAL)
 		{
 			if (!MMOCore()->GiveItem(ClientID, ITEM_MATERIAL, 25 + pPly->m_AccWorks.m_aWorks[WorkID].m_Level * 3)) {
 				GameServer()->SendChatLocalize(ClientID, "You have reached the maximum amount of materials. Go sell them in a shop!");
@@ -113,7 +113,7 @@ void CPickupJob::Damage(int ClientID)
 		}
 
 		// Give exp
-		if (WorkID != -1)
+		if(WorkID != -1)
 		{
 			pPly->AddWorkEXP(WorkID, GainXP);
 			GameServer()->SendChatLocalize(ClientID, "+%d %s work exp", GainXP, MMOCore()->GetWorkName(WorkID));
@@ -125,7 +125,7 @@ void CPickupJob::Damage(int ClientID)
 
 void CPickupJob::Tick()
 {
-	if (m_State < 4 && Server()->Tick() > m_NextGrowTick)
+	if(m_State < 4 && Server()->Tick() > m_NextGrowTick)
 	{
 		m_State++;
 
@@ -135,9 +135,9 @@ void CPickupJob::Tick()
 
 void CPickupJob::Snap(int SnappingClient)
 {
-	if (NetworkClipped(SnappingClient))
+	if(NetworkClipped(SnappingClient))
 		return;
-	if (m_State == 0)
+	if(m_State == 0)
 		return;
 
 	CNetObj_Pickup *pPickup = Server()->SnapNewItem<CNetObj_Pickup>(GetID());
@@ -147,19 +147,19 @@ void CPickupJob::Snap(int SnappingClient)
 	pPickup->m_X = (int)m_Pos.x;
 	pPickup->m_Y = (int)m_Pos.y;
 
-	if (m_Type == PICKUP_JOB_TYPE_FARM || m_Type == PICKUP_JOB_TYPE_MINE)
+	if(m_Type == PICKUP_JOB_TYPE_FARM || m_Type == PICKUP_JOB_TYPE_MINE)
 		pPickup->m_Type = POWERUP_ARMOR;
 	else
 		pPickup->m_Type = POWERUP_HEALTH;
 	pPickup->m_Subtype = 0;
 
 	// Snap farm grow states
-	if (m_Type != PICKUP_JOB_TYPE_FARM)
+	if(m_Type != PICKUP_JOB_TYPE_FARM)
 		return;
 
 	float s = sin(Server()->Tick() / 30.f);
 
-	for (int i = 0; i < 2; i++)
+	for(int i = 0; i < 2; i++)
 	{
 		if (i + 2 > m_State)
 			continue;
