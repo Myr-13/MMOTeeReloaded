@@ -932,10 +932,11 @@ void CGameContext::OnTick()
 		if(!pPly)
 			continue;
 
-		m_apPlayers[i]->Tick();
-		m_apPlayers[i]->PostTick();
+		pPly->Tick();
+		pPly->PostTick();
+		pPly->PostPostTick();
 
-		if(m_apPlayers[i]->m_ClanInviteEndTick - Server()->Tick() == 0)
+		if(pPly->m_ClanInviteEndTick - Server()->Tick() == 0)
 		{
 			CNetMsg_Sv_VoteSet Msg;
 
@@ -1009,14 +1010,8 @@ void CGameContext::OnTick()
 		}
 	}
 
-	for(auto &pPlayer : m_apPlayers)
-	{
-		if(pPlayer)
-			pPlayer->PostPostTick();
-	}
-
-	if (Server()->Tick() % (Server()->TickSpeed() * 60 * 5) == 0)
-		SendChatTarget(-1, "Join our discord server: https://discord.gg/3KrNyerWtx");
+	if (Server()->Tick() % (Server()->TickSpeed() * g_Config.m_MmoDiscordSpamTime) == 0)
+		SendChatLocalize(-1, "Join our discord community: %s", g_Config.m_MmoDiscordLink);
 
 	// update voting
 	if(m_VoteCloseTime)
