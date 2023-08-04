@@ -1,11 +1,12 @@
 #include "money_bag.h"
 
+#include <cstdlib>
 #include <engine/server.h>
-#include <game/server/entity.h>
 #include <game/generated/protocol.h>
-#include <game/server/player.h>
 #include <game/server/entities/character.h>
+#include <game/server/entity.h>
 #include <game/server/gamecontext.h>
+#include <game/server/player.h>
 
 CMoneyBag::CMoneyBag(CGameWorld *pWorld, vec2 Pos) :
 	CEntity(pWorld, CGameWorld::ENTTYPE_MONEY_BAG, Pos, 20.f)
@@ -24,7 +25,7 @@ void CMoneyBag::Tick()
 	if (pChr)
 	{
 		int Count = rand() % 5 + 1;
-		int Bonus = (Server()->Tick() - m_RespawnTick) / (60 * 60);
+		int Bonus = fmin((Server()->Tick() - m_RespawnTick) / (60 * 60), 30);
 		int ClientID = pChr->GetPlayer()->GetCID();
 
 		GameServer()->SendChatLocalize(-1, "%s found Secret Bag! Got %d + Time %d Money Bag!", Server()->ClientName(ClientID), Count, Bonus);
