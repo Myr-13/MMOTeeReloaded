@@ -367,6 +367,8 @@ SInvItem *CMMOCore::GetItem(int ItemID)
 		return (Item.m_ID == ItemID);
 	});
 
+	// Maybe fix this shit?
+
 	if (it == m_vItems.end())
 		return 0x0;
 	return &*it;
