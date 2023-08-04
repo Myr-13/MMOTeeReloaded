@@ -6,15 +6,9 @@
 class CPet : public CDummyController
 {
 	int m_Dir;
-	int m_AntiStuckTicks;
 
 	int m_OldDir;
 	vec2 m_OldPos;
-	int m_LastJumpTick;
-
-	// Target player
-	// Mob will always attack mobs
-	int m_Target;
 
 	void Move();
 	void TargetMobs();

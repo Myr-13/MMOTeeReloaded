@@ -7,6 +7,9 @@
 
 class CProjectile : public CEntity
 {
+	void Explosion(vec2 Pos, vec2 PrevPos);
+	void HitCharacter(vec2 PrevPos, vec2 Pos, vec2 PrevColPos);
+
 public:
 	CProjectile(
 		CGameWorld *pGameWorld,
@@ -19,7 +22,8 @@ public:
 		bool Explosive,
 		int SoundImpact,
 		bool BigBoom = false,
-		int PlusDamage = 0);
+		int PlusDamage = 0,
+		bool NoCharacter = false);
 
 	vec2 GetPos(float Time);
 	void FillInfo(CNetObj_Projectile *pProj);
@@ -41,6 +45,7 @@ private:
 	int m_StartTick;
 	bool m_Explosive;
 	int m_PlusDamage;
+	bool m_NoCharacters;
 
 	// DDRace
 	int m_Bouncing;

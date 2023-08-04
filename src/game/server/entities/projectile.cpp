@@ -25,7 +25,8 @@ CProjectile::CProjectile(
 	bool Explosive,
 	int SoundImpact,
 	bool BigBoom,
-	int PlusDamage) :
+	int PlusDamage,
+	bool NoCharacters) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Type = Type;
@@ -41,8 +42,7 @@ CProjectile::CProjectile(
 	m_BigBoom = BigBoom;
 	m_Freeze = Freeze;
 	m_PlusDamage = PlusDamage;
-
-	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
+	m_NoCharacters = NoCharacters;
 
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	m_BelongsToPracticeTeam = pOwnerChar && pOwnerChar->Teams()->IsPractice(pOwnerChar->Team());
@@ -84,147 +84,99 @@ vec2 CProjectile::GetPos(float Time)
 	return CalcPos(m_Pos, m_Direction, Curvature, Speed, Time);
 }
 
-void CProjectile::Tick()
+void CProjectile::Explosion(vec2 Pos, vec2 PrevPos)
 {
-	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
-	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
-	vec2 PrevPos = GetPos(Pt);
-	vec2 CurPos = GetPos(Ct);
-	vec2 ColPos;
-	vec2 NewPos;
-	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &ColPos, &NewPos);
+	GameServer()->CreateExplosion(Pos, m_Owner, m_Type, false, 0, CClientMask().set());
+	GameServer()->CreateSound(Pos, m_SoundImpact, CClientMask().set());
 
+	if (m_BigBoom)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			vec2 Dir = direction(random_float() * pi * 2) * 5.f;
+			new CBigBoomProjectile(GameWorld(), PrevPos, Dir, m_Owner);
+		}
+	}
+}
+
+void CProjectile::HitCharacter(vec2 PrevPos, vec2 Pos, vec2 PrevColPos)
+{
 	CCharacter *pOwnerChar = 0;
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
+	if(!g_Config.m_SvHit)
+		return;
+
 	CCharacter *pTargetChr = 0x0;
 	CDummyBase *pTargetDummy = 0x0;
 
-	if(pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit)
-		pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
+	// Try to collide character
+	if(!m_NoCharacters)
+		pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, Pos, m_Freeze ? 1.0f : 6.0f, Pos, pOwnerChar, m_Owner);
+
+	// If no character, then try to collide dummy
 	if(!pTargetChr)
-		pTargetDummy = GameWorld()->IntersectDummy(PrevPos, ColPos, 6.f, ColPos, 0x0, true);
+		pTargetDummy = GameWorld()->IntersectDummy(PrevPos, Pos, 6.f, Pos, 0x0, true);
+
+	// If we don't collide anything
+	if(!pTargetChr && !pTargetDummy)
+		return;
+
+	if(m_Explosive)
+		Explosion(PrevColPos, PrevColPos);
+
+	int Damage = g_pData->m_Weapons.m_Gun.m_pBase->m_Damage;
+	if(m_Type == WEAPON_SHOTGUN)
+		Damage = g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage;
+
+	Damage += m_PlusDamage;
+
+	if (pTargetChr)
+		pTargetChr->TakeDamage(vec2(0, 0), Damage, m_Owner, WEAPON_GUN);
+	if (pTargetDummy)
+		pTargetDummy->TakeDamage(vec2(0, 0), Damage, m_Owner, WEAPON_GUN);
+
+	// Delete entity, collided to entity
+	m_MarkedForDestroy = true;
+}
+
+void CProjectile::Tick()
+{
+	vec2 PrevPrevPos = GetPos((Server()->Tick() - m_StartTick - 2) / (float)Server()->TickSpeed());
+	vec2 PrevPos = GetPos((Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed());
+	vec2 CurPos = GetPos((Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed());
+	vec2 ColPos;
+	vec2 NewPos;
+
+	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &ColPos, &NewPos);
+
+	HitCharacter(PrevPos, ColPos, NewPos);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
 
-	CClientMask TeamMask = CClientMask().set();
-	bool IsWeaponCollide = false;
-	if(
-		pOwnerChar &&
-		pTargetChr &&
-		pOwnerChar->IsAlive() &&
-		pTargetChr->IsAlive() &&
-		!pTargetChr->CanCollide(m_Owner))
-	{
-		IsWeaponCollide = true;
-	}
-	if(pOwnerChar && pOwnerChar->IsAlive())
-	{
-		TeamMask = pOwnerChar->TeamMask();
-	}
 	else if(m_Owner >= 0 && (m_Type != WEAPON_GRENADE || g_Config.m_SvDestroyBulletsOnDeath || m_BelongsToPracticeTeam))
 	{
 		m_MarkedForDestroy = true;
 		return;
 	}
 
-	if(((
-		(pTargetChr || pTargetDummy) &&
-		(pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit || m_Owner == -1)) ||
-		Collide ||
-		GameLayerClipped(CurPos)
-		) && !IsWeaponCollide)
+	if(Collide || GameLayerClipped(CurPos))
 	{
-		// && (!pTargetChr || (m_Type == WEAPON_SHOTGUN && Collide))
 		if(m_Explosive)
-		{
-			int Number = 1;
-			if(GameServer()->EmulateBug(BUG_GRENADE_DOUBLEEXPLOSION) && m_LifeSpan == -1)
-			{
-				Number = 2;
-			}
-			for(int i = 0; i < Number; i++)
-			{
-				GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pTargetChr ? -1 : pTargetChr->Team()),
-					(m_Owner != -1) ? TeamMask : CClientMask().set());
-				GameServer()->CreateSound(ColPos, m_SoundImpact,
-					(m_Owner != -1) ? TeamMask : CClientMask().set());
+			Explosion(ColPos, PrevPrevPos);
+		m_MarkedForDestroy = true;
 
-				if (m_BigBoom)
-				{
-					for (int j = 0; j < 4; j++)
-					{
-						vec2 Dir = direction(random_float() * pi * 2) * 5.f;
-						new CBigBoomProjectile(GameWorld(), PrevPos, Dir, m_Owner);
-					}
-				}
-			}
-		}
-
-		if(Collide && m_Bouncing != 0)
-		{
-			m_StartTick = Server()->Tick();
-			m_Pos = NewPos + (-(m_Direction * 4));
-			if(m_Bouncing == 1)
-				m_Direction.x = -m_Direction.x;
-			else if(m_Bouncing == 2)
-				m_Direction.y = -m_Direction.y;
-			if(fabs(m_Direction.x) < 1e-6f)
-				m_Direction.x = 0;
-			if(fabs(m_Direction.y) < 1e-6f)
-				m_Direction.y = 0;
-			m_Pos += m_Direction;
-		}
-		else if(m_Type == WEAPON_GUN)
-		{
-			int Dmg = g_pData->m_Weapons.m_Gun.m_pBase->m_Damage + m_PlusDamage;
-			if (pTargetChr)
-				pTargetChr->TakeDamage(vec2(0, 0), Dmg, m_Owner, WEAPON_GUN);
-			if (pTargetDummy)
-				pTargetDummy->TakeDamage(vec2(0, 0), Dmg, m_Owner, WEAPON_GUN);
-			m_MarkedForDestroy = true;
-			return;
-		}
-		else if(m_Type == WEAPON_SHOTGUN)
-		{
-			int Dmg = g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage + m_PlusDamage;
-			if (pTargetChr)
-				pTargetChr->TakeDamage(vec2(0, 0), Dmg, m_Owner, WEAPON_SHOTGUN);
-			if (pTargetDummy)
-				pTargetDummy->TakeDamage(vec2(0, 0), Dmg, m_Owner, WEAPON_SHOTGUN);
-			m_MarkedForDestroy = true;
-			return;
-		}
-		else
-		{
-			if(!m_Freeze)
-			{
-				m_MarkedForDestroy = true;
-				return;
-			}
-		}
+		return;
 	}
+
 	if(m_LifeSpan == -1)
 	{
 		if(m_Explosive)
-		{
-			if(m_Owner >= 0)
-				pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-
-			TeamMask = CClientMask().set();
-			if(pOwnerChar && pOwnerChar->IsAlive())
-			{
-				TeamMask = pOwnerChar->TeamMask();
-			}
-
-			GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pOwnerChar ? -1 : pOwnerChar->Team()),
-				(m_Owner != -1) ? TeamMask : CClientMask().set());
-			GameServer()->CreateSound(ColPos, m_SoundImpact,
-				(m_Owner != -1) ? TeamMask : CClientMask().set());
-		}
+			Explosion(ColPos, ColPos);
 		m_MarkedForDestroy = true;
+
 		return;
 	}
 

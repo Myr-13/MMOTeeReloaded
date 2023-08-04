@@ -8,10 +8,8 @@
 CPet::CPet()
 {
 	m_Owner = -1;
-	m_Target = -1;
 	m_Dir = 0;
 	m_OldDir = 0;
-	m_LastJumpTick = 0;
 }
 
 void CPet::Init()

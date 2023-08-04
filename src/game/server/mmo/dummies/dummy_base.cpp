@@ -203,7 +203,8 @@ void CDummyBase::FireWeapon()
 			(Weapon == WEAPON_GRENADE), // Explosive
 			-1, // SoundImpact
 			false, // BigBoom
-			m_Damage // PlusDamage
+			m_Damage, // PlusDamage
+			m_DummyType == DUMMY_TYPE_PET // NoCharacters
 		);
 
 		// Spread
@@ -227,7 +228,8 @@ void CDummyBase::FireWeapon()
 				(Weapon == WEAPON_GRENADE), // Explosive
 				-1, // SoundImpact
 				false, // BigBoom
-				m_Damage // PlusDamage
+				m_Damage, // PlusDamage
+				m_DummyType == DUMMY_TYPE_PET // NoCharacters
 			);
 		}
 
