@@ -18,6 +18,7 @@ bool IDbConnection::CreateTablesMMO(char *pError, int ErrorSize)
 	CREATE_TABLE(Works)
 	CREATE_TABLE(Upgrades)
 	CREATE_TABLE(Clans)
+	CREATE_TABLE(Auction)
 
 #undef CREATE_TABLE
 
@@ -104,4 +105,21 @@ void IDbConnection::FormatCreateClans(char *aBuf, unsigned int BufferSize)
 		"  create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
 		")",
 		16);
+}
+
+void IDbConnection::FormatCreateAuction(char *aBuf, unsigned int BufferSize)
+{
+	str_format(aBuf, BufferSize,
+		"CREATE TABLE IF NOT EXISTS auction ("
+		"  id INTEGER NOT NULL PRIMARY KEY, "
+		"  item_id INTEGER NOT NULL, "
+		"  seller_id INTEGER NOT NULL, "
+		"  seller_name VARCHAR(%d) NOT NULL, "  // Some optimization and better code reading :D
+		"  cost INTEGER NOT NULL, "
+		"  end_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+		"  mode INTEGER NOT NULL, "  // 0 - Bid, 1 - Auction
+		"  buyer_id INTEGER NOT NULL DEFAULT 0, "  // For auction mode
+		"  buyer_id VARCHAR(%d) NOT NULL DEFAULT '', "  // For auction mode
+		")",
+		MAX_LOGIN_LENGTH, MAX_LOGIN_LENGTH);
 }

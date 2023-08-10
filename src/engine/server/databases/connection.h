@@ -105,6 +105,7 @@ protected:
 	void FormatCreateWorks(char *aBuf, unsigned int BufferSize);
 	void FormatCreateUpgrades(char *aBuf, unsigned int BufferSize);
 	void FormatCreateClans(char *aBuf, unsigned int BufferSize);
+	void FormatCreateAuction(char *aBuf, unsigned int BufferSize);
 };
 
 bool MysqlAvailable();
