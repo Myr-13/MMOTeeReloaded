@@ -638,7 +638,7 @@ void CConsole::Con_Echo(IResult *pResult, void *pUserData)
 
 void CConsole::Con_Exec(IResult *pResult, void *pUserData)
 {
-	((CConsole *)pUserData)->ExecuteFile(pResult->GetString(0), -1, true, IStorage::TYPE_ALL);
+	((CConsole *)pUserData)->ExecuteFile(pResult->GetString(0), -1, true, IStorageTW::TYPE_ALL);
 }
 
 void CConsole::Con_Reset(IResult *pResult, void *pUserData)
@@ -1006,7 +1006,7 @@ void CConsole::Init()
 {
 	m_pConfigManager = Kernel()->RequestInterface<IConfigManager>();
 	m_pConfig = m_pConfigManager->Values();
-	m_pStorage = Kernel()->RequestInterface<IStorage>();
+	m_pStorage = Kernel()->RequestInterface<IStorageTW>();
 
 // TODO: this should disappear
 #define MACRO_CONFIG_INT(Name, ScriptName, Def, Min, Max, Flags, Desc) \
@@ -1045,7 +1045,7 @@ void CConsole::ParseArguments(int NumArgs, const char **ppArguments)
 		if(ppArguments[i][0] == '-' && ppArguments[i][1] == 'f' && ppArguments[i][2] == 0)
 		{
 			if(NumArgs - i > 1)
-				ExecuteFile(ppArguments[i + 1], -1, true, IStorage::TYPE_ABSOLUTE);
+				ExecuteFile(ppArguments[i + 1], -1, true, IStorageTW::TYPE_ABSOLUTE);
 			i++;
 		}
 		else if(!str_comp("-s", ppArguments[i]) || !str_comp("--silent", ppArguments[i]))

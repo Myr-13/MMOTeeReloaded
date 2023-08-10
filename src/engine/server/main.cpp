@@ -108,7 +108,7 @@ int main(int argc, const char **argv)
 	IEngineMap *pEngineMap = CreateEngineMap();
 	IGameServer *pGameServer = CreateGameServer();
 	IConsole *pConsole = CreateConsole(CFGFLAG_SERVER | CFGFLAG_ECON).release();
-	IStorage *pStorage = CreateStorage(IStorage::STORAGETYPE_SERVER, argc, argv);
+	IStorageTW *pStorage = CreateStorage(IStorageTW::STORAGETYPE_SERVER, argc, argv);
 	IConfigManager *pConfigManager = CreateConfigManager();
 
 	pFutureAssertionLogger->Set(CreateAssertionLogger(pStorage, GAME_NAME));
@@ -118,7 +118,7 @@ int main(int argc, const char **argv)
 	char aDate[64];
 	str_timestamp(aDate, sizeof(aDate));
 	str_format(aBufName, sizeof(aBufName), "dumps/" GAME_NAME "-Server_crash_log_%d_%s.RTP", pid(), aDate);
-	pStorage->GetCompletePath(IStorage::TYPE_SAVE, aBufName, aBuf, sizeof(aBuf));
+	pStorage->GetCompletePath(IStorageTW::TYPE_SAVE, aBufName, aBuf, sizeof(aBuf));
 	set_exception_handler_log_file(aBuf);
 #endif
 
@@ -149,7 +149,7 @@ int main(int argc, const char **argv)
 	pServer->RegisterCommands();
 
 	// execute autoexec file
-	IOHANDLE File = pStorage->OpenFile(AUTOEXEC_SERVER_FILE, IOFLAG_READ, IStorage::TYPE_ALL);
+	IOHANDLE File = pStorage->OpenFile(AUTOEXEC_SERVER_FILE, IOFLAG_READ, IStorageTW::TYPE_ALL);
 	if(File)
 	{
 		io_close(File);
@@ -170,7 +170,7 @@ int main(int argc, const char **argv)
 	log_set_loglevel((LEVEL)g_Config.m_Loglevel);
 	if(g_Config.m_Logfile[0])
 	{
-		IOHANDLE Logfile = pStorage->OpenFile(g_Config.m_Logfile, IOFLAG_WRITE, IStorage::TYPE_SAVE_OR_ABSOLUTE);
+		IOHANDLE Logfile = pStorage->OpenFile(g_Config.m_Logfile, IOFLAG_WRITE, IStorageTW::TYPE_SAVE_OR_ABSOLUTE);
 		if(Logfile)
 		{
 			pFutureFileLogger->Set(log_logger_file(Logfile));

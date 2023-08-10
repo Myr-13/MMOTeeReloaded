@@ -38,8 +38,6 @@ public:
 	virtual const char *InsertIgnore() const = 0;
 	// ORDER BY RANDOM()/RAND()
 	virtual const char *Random() const = 0;
-	// Get Median Map Time from l.Map
-	virtual const char *MedianMapTime(char *pBuffer, int BufferSize) const = 0;
 	virtual const char *False() const = 0;
 	virtual const char *True() const = 0;
 
@@ -84,21 +82,12 @@ public:
 	// returns number of bytes read into the buffer
 	virtual int GetBlob(int Col, unsigned char *pBuffer, int BufferSize) = 0;
 
-	// SQL statements, that can't be abstracted, has side effects to the result
-	virtual bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) = 0;
-
 private:
 	char m_aPrefix[64];
 
 	virtual bool Execute(const char *pQuery, char *pError, int ErrorSize) = 0;
 
 protected:
-	void FormatCreateRace(char *aBuf, unsigned int BufferSize, bool Backup);
-	void FormatCreateTeamrace(char *aBuf, unsigned int BufferSize, const char *pIdType, bool Backup);
-	void FormatCreateMaps(char *aBuf, unsigned int BufferSize);
-	void FormatCreateSaves(char *aBuf, unsigned int BufferSize, bool Backup);
-	void FormatCreatePoints(char *aBuf, unsigned int BufferSize);
-
 	bool CreateTablesMMO(char *pError, int ErrorSize);
 	void FormatCreateAccounts(char *aBuf, unsigned int BufferSize);
 	void FormatCreateInventories(char *aBuf, unsigned int BufferSize);

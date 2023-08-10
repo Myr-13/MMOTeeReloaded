@@ -22,7 +22,6 @@ public:
 	const char *CollateNocase() const override { return "? COLLATE NOCASE"; }
 	const char *InsertIgnore() const override { return "INSERT OR IGNORE"; }
 	const char *Random() const override { return "RANDOM()"; }
-	const char *MedianMapTime(char *pBuffer, int BufferSize) const override;
 	// Since SQLite 3.23.0 true/false literals are recognized, but still cleaner to use 1/0, because:
 	// > For compatibility, if there exist columns named "true" or "false", then
 	// > the identifiers refer to the columns rather than Boolean constants.
@@ -51,11 +50,6 @@ public:
 	void GetString(int Col, char *pBuffer, int BufferSize) override;
 	// passing a negative buffer size is undefined behavior
 	int GetBlob(int Col, unsigned char *pBuffer, int BufferSize) override;
-
-	bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
-
-	// fail safe
-	bool CreateFailsafeTables();
 
 private:
 	// copy of config vars
@@ -308,23 +302,6 @@ int CSqliteConnection::GetBlob(int Col, unsigned char *pBuffer, int BufferSize)
 	return Size;
 }
 
-const char *CSqliteConnection::MedianMapTime(char *pBuffer, int BufferSize) const
-{
-	str_format(pBuffer, BufferSize,
-		"SELECT AVG("
-		"  CASE counter %% 2 "
-		"    WHEN 0 THEN CASE WHEN rn IN (counter / 2, counter / 2 + 1) THEN Time END "
-		"    WHEN 1 THEN CASE WHEN rn = counter / 2 + 1 THEN Time END END) "
-		"  OVER (PARTITION BY Map) AS Median "
-		"FROM ("
-		"  SELECT *, ROW_NUMBER() "
-		"  OVER (PARTITION BY Map ORDER BY Time) rn, COUNT(*) "
-		"  OVER (PARTITION BY Map) counter "
-		"  FROM %s_race where Map = l.Map) as r",
-		GetPrefix());
-	return pBuffer;
-}
-
 bool CSqliteConnection::Execute(const char *pQuery, char *pError, int ErrorSize)
 {
 	char *pErrorMsg;
@@ -356,25 +333,6 @@ void CSqliteConnection::AssertNoError(int Result)
 		dbg_msg("sqlite", "unexpected sqlite error: %s", aBuf);
 		dbg_assert(0, "sqlite error");
 	}
-}
-
-bool CSqliteConnection::AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)
-{
-	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf),
-		"INSERT INTO %s_points(Name, Points) "
-		"VALUES (?, ?) "
-		"ON CONFLICT(Name) DO UPDATE SET Points=Points+?",
-		GetPrefix());
-	if(PrepareStatement(aBuf, pError, ErrorSize))
-	{
-		return true;
-	}
-	BindString(1, pPlayer);
-	BindInt(2, Points);
-	BindInt(3, Points);
-	bool End;
-	return Step(&End, pError, ErrorSize);
 }
 
 std::unique_ptr<IDbConnection> CreateSqliteConnection(const char *pFilename, bool Setup)

@@ -36,13 +36,25 @@
     <!-- Hohol -->
     <Mob ID="1" AIType="1">
         <TeeInfo Name="Hohol" Skin="pinky" UseCustomColors="0" ColorBody="0" ColorFeet="0"/>
-        <Stats Level="200" HP="450" Armor="130" Damage="70"/>
+        <Stats Level="250" HP="450" Armor="130" Damage="70"/>
         <Spawn SpawnPoint="Hohol"/>
     </Mob>
-    <!-- Sochan -->
+    <!-- Vortex elemental -->
+    <Mob ID="1" AIType="3">
+        <TeeInfo Name="VortexElemental" Skin="cammo" UseCustomColors="1" ColorBody="8584960" ColorFeet="10878720"/>
+        <Stats Level="300" HP="650" Armor="330" Damage="100"/>
+        <Spawn SpawnPoint="Vortex"/>
+    </Mob>
+    <!-- Spider -->
+    <Mob ID="1" AIType="4">
+        <TeeInfo Name="Spider" Skin="spider" UseCustomColors="0" ColorBody="0" ColorFeet="0"/>
+        <Stats Level="400" HP="900" Armor="600" Damage="120"/>
+        <Spawn SpawnPoint="Spider"/>
+    </Mob>
+    <!-- Living fire -->
     <Mob ID="1" AIType="1">
-        <TeeInfo Name="Sochan" Skin="redstripe" UseCustomColors="1" ColorBody="9740323" ColorFeet="12386048"/>
-        <Stats Level="250" HP="500" Armor="200" Damage="100"/>
-        <Spawn SpawnPoint="Sochan"/>
+        <TeeInfo Name="Living fire" Skin="bluestripe" UseCustomColors="1" ColorBody="1048320" ColorFeet="65280"/>
+        <Stats Level="500" HP="1150" Armor="850" Damage="150"/>
+        <Spawn SpawnPoint="Fire"/>
     </Mob>
 </Mobs>

@@ -77,7 +77,6 @@ public:
 	const char *CollateNocase() const override { return "CONVERT(? USING utf8mb4) COLLATE utf8mb4_general_ci"; }
 	const char *InsertIgnore() const override { return "INSERT IGNORE"; }
 	const char *Random() const override { return "RAND()"; }
-	const char *MedianMapTime(char *pBuffer, int BufferSize) const override;
 	const char *False() const override { return "FALSE"; }
 	const char *True() const override { return "TRUE"; }
 
@@ -103,8 +102,6 @@ public:
 	void GetString(int Col, char *pBuffer, int BufferSize) override;
 	int GetBlob(int Col, unsigned char *pBuffer, int BufferSize) override;
 
-	bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
-
 private:
 	class CStmtDeleter
 	{
@@ -118,6 +115,7 @@ private:
 	bool ConnectImpl();
 	bool PrepareAndExecuteStatement(const char *pStmt);
 	//static void DeleteResult(MYSQL_RES *pResult);
+	virtual bool Execute(const char *, char *, int) override;
 
 	union UParameterExtra
 	{
@@ -295,27 +293,12 @@ bool CMysqlConnection::ConnectImpl()
 
 	if(m_Config.m_Setup)
 	{
-		char aCreateRace[1024];
-		char aCreateTeamrace[1024];
-		char aCreateMaps[1024];
-		char aCreateSaves[1024];
-		char aCreatePoints[1024];
-		FormatCreateRace(aCreateRace, sizeof(aCreateRace), /* Backup */ false);
-		FormatCreateTeamrace(aCreateTeamrace, sizeof(aCreateTeamrace), "VARBINARY(16)", /* Backup */ false);
-		FormatCreateMaps(aCreateMaps, sizeof(aCreateMaps));
-		FormatCreateSaves(aCreateSaves, sizeof(aCreateSaves), /* Backup */ false);
-		FormatCreatePoints(aCreatePoints, sizeof(aCreatePoints));
-
-		if(PrepareAndExecuteStatement(aCreateRace) ||
-			PrepareAndExecuteStatement(aCreateTeamrace) ||
-			PrepareAndExecuteStatement(aCreateMaps) ||
-			PrepareAndExecuteStatement(aCreateSaves) ||
-			PrepareAndExecuteStatement(aCreatePoints))
-		{
+		if(CreateTablesMMO(m_aErrorDetail, sizeof(m_aErrorDetail)))
 			return true;
-		}
+
 		m_Config.m_Setup = false;
 	}
+
 	dbg_msg("mysql", "connection established");
 	return false;
 }
@@ -337,8 +320,8 @@ bool CMysqlConnection::PrepareStatement(const char *pStmt, char *pError, int Err
 	unsigned NumParameters = mysql_stmt_param_count(m_pStmt.get());
 	m_vStmtParameters.resize(NumParameters);
 	m_vStmtParameterExtras.resize(NumParameters);
-	mem_zero(&m_vStmtParameters[0], sizeof(m_vStmtParameters[0]) * m_vStmtParameters.size());
-	mem_zero(&m_vStmtParameterExtras[0], sizeof(m_vStmtParameterExtras[0]) * m_vStmtParameterExtras.size());
+	mem_zero(m_vStmtParameters.data(), sizeof(m_vStmtParameters[0]) * m_vStmtParameters.size());
+	mem_zero(m_vStmtParameterExtras.data(), sizeof(m_vStmtParameterExtras[0]) * m_vStmtParameterExtras.size());
 	return false;
 }
 
@@ -433,7 +416,7 @@ bool CMysqlConnection::Step(bool *pEnd, char *pError, int ErrorSize)
 	if(m_NewQuery)
 	{
 		m_NewQuery = false;
-		if(mysql_stmt_bind_param(m_pStmt.get(), &m_vStmtParameters[0]))
+		if(mysql_stmt_bind_param(m_pStmt.get(), m_vStmtParameters.data()))
 		{
 			StoreErrorStmt("bind_param");
 			str_copy(pError, m_aErrorDetail, ErrorSize);
@@ -464,7 +447,7 @@ bool CMysqlConnection::ExecuteUpdate(int *pNumUpdated, char *pError, int ErrorSi
 	if(m_NewQuery)
 	{
 		m_NewQuery = false;
-		if(mysql_stmt_bind_param(m_pStmt.get(), &m_vStmtParameters[0]))
+		if(mysql_stmt_bind_param(m_pStmt.get(), m_vStmtParameters.data()))
 		{
 			StoreErrorStmt("bind_param");
 			str_copy(pError, m_aErrorDetail, ErrorSize);
@@ -644,58 +627,45 @@ int CMysqlConnection::GetBlob(int Col, unsigned char *pBuffer, int BufferSize)
 	Bind.is_null = &IsNull;
 	Bind.is_unsigned = false;
 	Bind.error = &Error;
+
 	if(mysql_stmt_fetch_column(m_pStmt.get(), &Bind, Col, 0))
 	{
 		StoreErrorStmt("fetch_column:blob");
 		dbg_msg("mysql", "error fetching column %s", m_aErrorDetail);
 		dbg_assert(0, "error in GetBlob");
 	}
+
 	if(IsNull)
-	{
 		dbg_assert(0, "error getting blob: NULL");
-	}
+
 	if(Error)
-	{
 		dbg_assert(0, "error getting blob: truncation occurred");
-	}
+
 	return Length;
-}
-
-const char *CMysqlConnection::MedianMapTime(char *pBuffer, int BufferSize) const
-{
-	str_format(pBuffer, BufferSize,
-		"SELECT MEDIAN(Time) "
-		"OVER (PARTITION BY Map) "
-		"FROM %s_race "
-		"WHERE Map = l.Map "
-		"LIMIT 1",
-		GetPrefix());
-	return pBuffer;
-}
-
-bool CMysqlConnection::AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)
-{
-	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf),
-		"INSERT INTO %s_points(Name, Points) "
-		"VALUES (?, ?) "
-		"ON DUPLICATE KEY UPDATE Points=Points+?",
-		GetPrefix());
-	if(PrepareStatement(aBuf, pError, ErrorSize))
-	{
-		return true;
-	}
-	BindString(1, pPlayer);
-	BindInt(2, Points);
-	BindInt(3, Points);
-	int NumUpdated;
-	return ExecuteUpdate(&NumUpdated, pError, ErrorSize);
 }
 
 std::unique_ptr<IDbConnection> CreateMysqlConnection(CMysqlConfig Config)
 {
 	return std::make_unique<CMysqlConnection>(Config);
 }
+
+bool CMysqlConnection::Execute(const char *pQuery, char *pError, int ErrorSize)
+{
+	if(mysql_stmt_prepare(m_pStmt.get(), pQuery, str_length(pQuery)))
+	{
+		str_format(pError, ErrorSize, "(prepare:mysql:%d): %s", mysql_errno(&m_Mysql), mysql_error(&m_Mysql));
+		return true;
+	}
+
+	if(mysql_stmt_execute(m_pStmt.get()))
+	{
+		str_format(pError, ErrorSize, "(execute:mysql:%d): %s", mysql_errno(&m_Mysql), mysql_error(&m_Mysql));
+		return true;
+	}
+
+	return false;
+}
+
 #else
 bool MysqlAvailable()
 {

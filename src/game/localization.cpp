@@ -40,7 +40,7 @@ void CLocalizationDatabase::AddString(const char *pOrgStr, const char *pNewStr, 
 	m_vStrings.emplace_back(str_quickhash(pOrgStr), str_quickhash(pContext), m_StringsHeap.StoreString(*pNewStr ? pNewStr : pOrgStr));
 }
 
-bool CLocalizationDatabase::Load(const char *pFilename, IStorage *pStorage, IConsole *pConsole)
+bool CLocalizationDatabase::Load(const char *pFilename, IStorageTW *pStorage, IConsole *pConsole)
 {
 	// empty string means unload
 	if(pFilename[0] == 0)
@@ -51,7 +51,7 @@ bool CLocalizationDatabase::Load(const char *pFilename, IStorage *pStorage, ICon
 		return true;
 	}
 
-	IOHANDLE IoHandle = pStorage->OpenFile(pFilename, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
+	IOHANDLE IoHandle = pStorage->OpenFile(pFilename, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorageTW::TYPE_ALL);
 	if(!IoHandle)
 		return false;
 

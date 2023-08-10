@@ -49,10 +49,10 @@ void CMap::Unload()
 
 bool CMap::Load(const char *pMapName)
 {
-	IStorage *pStorage = Kernel()->RequestInterface<IStorage>();
+	IStorageTW *pStorage = Kernel()->RequestInterface<IStorageTW>();
 	if(!pStorage)
 		return false;
-	return m_DataFile.Open(pStorage, pMapName, IStorage::TYPE_ALL);
+	return m_DataFile.Open(pStorage, pMapName, IStorageTW::TYPE_ALL);
 }
 
 bool CMap::IsLoaded()

@@ -10,7 +10,7 @@ bool IDbConnection::CreateTablesMMO(char *pError, int ErrorSize)
 
 #define CREATE_TABLE(Name) \
 	FormatCreate##Name(aBuf, sizeof(aBuf)); \
-	if (Execute(aBuf, pError, ErrorSize)) \
+	if(Execute(aBuf, pError, ErrorSize)) \
 		return true;
 
 	CREATE_TABLE(Accounts)
@@ -119,7 +119,7 @@ void IDbConnection::FormatCreateAuction(char *aBuf, unsigned int BufferSize)
 		"  end_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
 		"  mode INTEGER NOT NULL, "  // 0 - Bid, 1 - Auction
 		"  buyer_id INTEGER NOT NULL DEFAULT 0, "  // For auction mode
-		"  buyer_id VARCHAR(%d) NOT NULL DEFAULT '', "  // For auction mode
+		"  buyer_name VARCHAR(%d) NOT NULL DEFAULT ''"  // For auction mode
 		")",
 		MAX_LOGIN_LENGTH, MAX_LOGIN_LENGTH);
 }

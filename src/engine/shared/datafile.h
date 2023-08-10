@@ -32,7 +32,7 @@ public:
 
 	bool IsOpen() const { return m_pDataFile != nullptr; }
 
-	bool Open(class IStorage *pStorage, const char *pFilename, int StorageType);
+	bool Open(class IStorageTW *pStorage, const char *pFilename, int StorageType);
 	bool Close();
 
 	void *GetData(int Index);
@@ -106,8 +106,8 @@ public:
 	CDataFileWriter();
 	~CDataFileWriter();
 	void Init();
-	bool OpenFile(class IStorage *pStorage, const char *pFilename, int StorageType = IStorage::TYPE_SAVE);
-	bool Open(class IStorage *pStorage, const char *pFilename, int StorageType = IStorage::TYPE_SAVE);
+	bool OpenFile(class IStorageTW *pStorage, const char *pFilename, int StorageType = IStorageTW::TYPE_SAVE);
+	bool Open(class IStorageTW *pStorage, const char *pFilename, int StorageType = IStorageTW::TYPE_SAVE);
 	int AddData(int Size, void *pData, int CompressionLevel = Z_DEFAULT_COMPRESSION);
 	int AddDataSwapped(int Size, void *pData);
 	int AddItem(int Type, int ID, int Size, void *pData);

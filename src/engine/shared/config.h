@@ -66,7 +66,7 @@ class CConfigManager : public IConfigManager
 		void *m_pUserData;
 	};
 
-	class IStorage *m_pStorage;
+	class IStorageTW *m_pStorage;
 	IOHANDLE m_ConfigFile;
 	bool m_Failed;
 	CCallback m_aCallbacks[MAX_CALLBACKS];

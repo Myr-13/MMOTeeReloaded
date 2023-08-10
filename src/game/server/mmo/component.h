@@ -13,7 +13,7 @@ protected:
 	CGameContext *GameServer() const;
 	class CConfig *Config() const;
 	class IServer *Server() const;
-	class IStorage *Storage() const;
+	class IStorageTW *Storage() const;
 	class IConsole *Console() const;
 	class CCollision *Collision() const;
 	class CMMOCore *MMOCore() const;

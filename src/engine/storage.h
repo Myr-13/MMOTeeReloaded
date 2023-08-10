@@ -13,7 +13,7 @@ enum
 	MAX_PATHS = 16
 };
 
-class IStorage : public IInterface
+class IStorageTW : public IInterface
 {
 	MACRO_INTERFACE("storage", 0)
 public:
@@ -65,8 +65,8 @@ public:
 	static const char *FormatTmpPath(char *aBuf, unsigned BufSize, const char *pPath);
 };
 
-extern IStorage *CreateStorage(int StorageType, int NumArgs, const char **ppArguments);
-extern IStorage *CreateLocalStorage();
-extern IStorage *CreateTempStorage(const char *pDirectory);
+extern IStorageTW *CreateStorage(int StorageType, int NumArgs, const char **ppArguments);
+extern IStorageTW *CreateLocalStorage();
+extern IStorageTW *CreateTempStorage(const char *pDirectory);
 
 #endif

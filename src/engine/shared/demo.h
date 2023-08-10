@@ -38,7 +38,7 @@ public:
 	CDemoRecorder(class CSnapshotDelta *pSnapshotDelta, bool NoMapData = false);
 	CDemoRecorder() {}
 
-	int Start(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, const char *pNetversion, const char *pMap, SHA256_DIGEST *pSha256, unsigned MapCrc, const char *pType, unsigned MapSize, unsigned char *pMapData, IOHANDLE MapFile = nullptr, DEMOFUNC_FILTER pfnFilter = nullptr, void *pUser = nullptr);
+	int Start(class IStorageTW *pStorage, class IConsole *pConsole, const char *pFilename, const char *pNetversion, const char *pMap, SHA256_DIGEST *pSha256, unsigned MapCrc, const char *pType, unsigned MapSize, unsigned char *pMapData, IOHANDLE MapFile = nullptr, DEMOFUNC_FILTER pfnFilter = nullptr, void *pUser = nullptr);
 	int Stop() override;
 
 	void AddDemoMarker();
@@ -131,9 +131,9 @@ public:
 
 	void SetListener(IListener *pListener);
 
-	int Load(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, int StorageType);
-	unsigned char *GetMapData(class IStorage *pStorage);
-	bool ExtractMap(class IStorage *pStorage);
+	int Load(class IStorageTW *pStorage, class IConsole *pConsole, const char *pFilename, int StorageType);
+	unsigned char *GetMapData(class IStorageTW *pStorage);
+	bool ExtractMap(class IStorageTW *pStorage);
 	int Play();
 	void Pause() override;
 	void Unpause() override;
@@ -146,7 +146,7 @@ public:
 	int SetPos(int WantedTick) override;
 	const CInfo *BaseInfo() const override { return &m_Info.m_Info; }
 	void GetDemoName(char *pBuffer, int BufferSize) const override;
-	bool GetDemoInfo(class IStorage *pStorage, const char *pFilename, int StorageType, CDemoHeader *pDemoHeader, CTimelineMarkers *pTimelineMarkers, CMapInfo *pMapInfo) const override;
+	bool GetDemoInfo(class IStorageTW *pStorage, const char *pFilename, int StorageType, CDemoHeader *pDemoHeader, CTimelineMarkers *pTimelineMarkers, CMapInfo *pMapInfo) const override;
 	const char *GetDemoFileName() { return m_aFilename; }
 	int GetDemoType() const override;
 
@@ -162,7 +162,7 @@ class CDemoEditor : public IDemoEditor, public CDemoPlayer::IListener
 	CDemoPlayer *m_pDemoPlayer;
 	CDemoRecorder *m_pDemoRecorder;
 	IConsole *m_pConsole;
-	IStorage *m_pStorage;
+	IStorageTW *m_pStorage;
 	class CSnapshotDelta *m_pSnapshotDelta;
 	const char *m_pNetVersion;
 
@@ -171,7 +171,7 @@ class CDemoEditor : public IDemoEditor, public CDemoPlayer::IListener
 	int m_SliceTo;
 
 public:
-	virtual void Init(const char *pNetVersion, class CSnapshotDelta *pSnapshotDelta, class IConsole *pConsole, class IStorage *pStorage);
+	virtual void Init(const char *pNetVersion, class CSnapshotDelta *pSnapshotDelta, class IConsole *pConsole, class IStorageTW *pStorage);
 	void Slice(const char *pDemo, const char *pDst, int StartTick, int EndTick, DEMOFUNC_FILTER pfnFilter, void *pUser) override;
 
 	void OnDemoPlayerSnapshot(void *pData, int Size) override;

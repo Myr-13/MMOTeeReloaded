@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #endif
 
-class CStorage : public IStorage
+class CStorage : public IStorageTW
 {
 public:
 	char m_aaStoragePaths[MAX_PATHS][IO_MAX_PATH_LENGTH];
@@ -719,7 +719,7 @@ public:
 		return pBuffer;
 	}
 
-	static IStorage *Create(int StorageType, int NumArgs, const char **ppArguments)
+	static IStorageTW *Create(int StorageType, int NumArgs, const char **ppArguments)
 	{
 		CStorage *pStorage = new CStorage();
 		if(pStorage && pStorage->Init(StorageType, NumArgs, ppArguments))
@@ -732,7 +732,7 @@ public:
 	}
 };
 
-void IStorage::StripPathAndExtension(const char *pFilename, char *pBuffer, int BufferSize)
+void IStorageTW::StripPathAndExtension(const char *pFilename, char *pBuffer, int BufferSize)
 {
 	const char *pFilenameEnd = pFilename + str_length(pFilename);
 	const char *pExtractedName = pFilename;
@@ -754,18 +754,18 @@ void IStorage::StripPathAndExtension(const char *pFilename, char *pBuffer, int B
 	str_copy(pBuffer, pExtractedName, Length);
 }
 
-const char *IStorage::FormatTmpPath(char *aBuf, unsigned BufSize, const char *pPath)
+const char *IStorageTW::FormatTmpPath(char *aBuf, unsigned BufSize, const char *pPath)
 {
 	str_format(aBuf, BufSize, "%s.%d.tmp", pPath, pid());
 	return aBuf;
 }
 
-IStorage *CreateStorage(int StorageType, int NumArgs, const char **ppArguments)
+IStorageTW *CreateStorage(int StorageType, int NumArgs, const char **ppArguments)
 {
 	return CStorage::Create(StorageType, NumArgs, ppArguments);
 }
 
-IStorage *CreateLocalStorage()
+IStorageTW *CreateLocalStorage()
 {
 	CStorage *pStorage = new CStorage();
 	if(pStorage)
@@ -779,7 +779,7 @@ IStorage *CreateLocalStorage()
 	}
 	return pStorage;
 }
-IStorage *CreateTempStorage(const char *pDirectory)
+IStorageTW *CreateTempStorage(const char *pDirectory)
 {
 	CStorage *pStorage = new CStorage();
 	if(!pStorage)

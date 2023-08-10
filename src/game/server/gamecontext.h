@@ -64,7 +64,7 @@ class CPlayer;
 class CUnpacker;
 class IGameController;
 class IEngine;
-class IStorage;
+class IStorageTW;
 
 struct CSnapContext
 {
@@ -87,7 +87,7 @@ class CGameContext : public IGameServer
 	CConfig *m_pConfig;
 	IConsole *m_pConsole;
 	IEngine *m_pEngine;
-	IStorage *m_pStorage;
+	IStorageTW *m_pStorage;
 	CLayers m_Layers;
 	CCollision m_Collision;
 	protocol7::CNetObjHandler m_NetObjHandler7;
@@ -152,7 +152,7 @@ public:
 	CConfig *Config() { return m_pConfig; }
 	IConsole *Console() { return m_pConsole; }
 	IEngine *Engine() { return m_pEngine; }
-	IStorage *Storage() { return m_pStorage; }
+	IStorageTW *Storage() { return m_pStorage; }
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
 	CTuningParams *TuningList() { return &m_aTuningList[0]; }
