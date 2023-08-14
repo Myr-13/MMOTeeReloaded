@@ -38,9 +38,10 @@ void IDbConnection::FormatCreateAccounts(char *aBuf, unsigned int BufferSize)
 		"  donate INTEGER DEFAULT 0, "
 		"  clan_id INTEGER DEFAULT 0, "
 		"  language INTEGER DEFAULT 0, "
-		"  create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+		"  create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+		"  blocked BOOL DEFAULT %s"
 		")",
-		MAX_LOGIN_LENGTH, MD5_MAXSTRSIZE);
+		MAX_LOGIN_LENGTH, MD5_MAXSTRSIZE, False());
 }
 
 void IDbConnection::FormatCreateInventories(char *aBuf, unsigned int BufferSize)

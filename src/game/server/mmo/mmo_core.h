@@ -22,6 +22,7 @@ class CMMOCore
 
 	int m_aBotSnapIDs[MAX_CLIENTS];
 
+	// TODO: Move this to separate components
 	std::vector<SInvItem> m_vItems;
 	std::vector<SShopEntry> m_vShopItems;
 	std::vector<SBotData> m_vBotsData;
