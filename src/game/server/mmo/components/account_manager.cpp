@@ -27,7 +27,9 @@ bool CAccountManager::RegisterThread(IDbConnection *pSqlServer, const ISqlData *
 
 	if(pSqlServer->Step(&End, pError, ErrorSize))
 		return true;
-	if(pSqlServer->GetInt(1) != 0)
+
+	int Count = pSqlServer->GetInt(1);
+	if(Count != 0)
 	{
 		str_format(pResult->m_aMessage, sizeof(pResult->m_aMessage), "This name is already taken.");
 		return false;
@@ -221,7 +223,7 @@ bool CAccountManager::SaveThread(IDbConnection *pSqlServer, const ISqlData *pGam
 	int NumInserted;
 
 	// Update 'users' table
-	str_copy(aBuf, "UPDATE users SET level = ?, exp = ?, money = ?, donate = ? WHERE id = ?");
+	str_copy(aBuf, "UPDATE users SET level = ?, exp = ?, money = ?, donate = ?, clan_id = ?, language = ? WHERE id = ?");
 
 	if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		return true;
@@ -230,6 +232,8 @@ bool CAccountManager::SaveThread(IDbConnection *pSqlServer, const ISqlData *pGam
 	pSqlServer->BindInt(3, pData->m_AccData.m_Money);
 	pSqlServer->BindInt(4, pData->m_AccData.m_Donate);
 	pSqlServer->BindInt(5, pData->m_AccData.m_ID);
+	pSqlServer->BindInt(6, pData->m_AccData.m_ClanID);
+	pSqlServer->BindInt(7, pData->m_AccData.m_Lang);
 
 	if(pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize))
 		return true;

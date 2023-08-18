@@ -13,9 +13,6 @@
 #define str_scan(Str, Format, ...) sscanf_s(Str, Format, __VA_ARGS__)
 #endif
 
-#define CLICK "☞ "
-#define VALUE "► "
-
 CVoteMenu::CVoteMenu()
 {
 	for (int &i : m_aPlayersMenu)
@@ -50,7 +47,7 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 	// Handle cmds
 	int Value1;
 
-	if (str_scan(aCmd, "set%d", &Value1))
+	if(str_scan(aCmd, "set%d", &Value1))
 	{
 		m_aPlayersMenu[ClientID] = Value1;
 		RebuildMenu(ClientID);
@@ -59,17 +56,17 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		if (pChr)
 			GameServer()->CreateSound(pChr->m_Pos, SOUND_PICKUP_ARMOR);
 	}
-	else if (str_scan(aCmd, "inv_list%d", &Value1))
+	else if(str_scan(aCmd, "inv_list%d", &Value1))
 	{
 		RebuildMenu(ClientID);
 		AddMenuVote(ClientID, "null", "");
 		ListInventory(ClientID, Value1);
 	}
-	else if (str_scan(aCmd, "inv_item%d", &Value1))
+	else if(str_scan(aCmd, "inv_item%d", &Value1))
 	{
 		ItemInfo(ClientID, Value1);
 	}
-	else if (str_scan(aCmd, "inv_item_use%d", &Value1))
+	else if(str_scan(aCmd, "inv_item_use%d", &Value1))
 	{
 		int Count = 1;
 		try
@@ -84,12 +81,12 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		RebuildMenu(ClientID);
 		MMOCore()->UseItem(ClientID, Value1, Count);
 	}
-	else if (str_scan(aCmd, "inv_item_eqp%d", &Value1))
+	else if(str_scan(aCmd, "inv_item_eqp%d", &Value1))
 	{
 		MMOCore()->SetEquippedItem(ClientID, Value1, MMOCore()->GetEquippedItem(ClientID, MMOCore()->GetItemType(Value1)) == -1);
 		RebuildMenu(ClientID);
 	}
-	else if (str_scan(aCmd, "inv_item_drop%d", &Value1))
+	else if(str_scan(aCmd, "inv_item_drop%d", &Value1))
 	{
 		int Count = 1;
 		try
@@ -104,7 +101,7 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 		RebuildMenu(ClientID);
 		MMOCore()->DropItem(ClientID, Value1, Count);
 	}
-	else if (str_scan(aCmd, "upgr%d", &Value1))
+	else if(str_scan(aCmd, "upgr%d", &Value1))
 	{
 		int Count = 1;
 		try
@@ -129,16 +126,16 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 
 		RebuildMenu(ClientID);
 	}
-	else if (str_scan(aCmd, "shop%d", &Value1))
+	else if(str_scan(aCmd, "shop%d", &Value1))
 	{
 		MMOCore()->BuyItem(ClientID, Value1);
 		RebuildMenu(ClientID);
 	}
-	else if (str_scan(aCmd, "craft_list%d", &Value1))
+	else if(str_scan(aCmd, "craft_list%d", &Value1))
 	{
 		ListCrafts(ClientID, Value1);
 	}
-	else if (str_scan(aCmd, "craft%d", &Value1))
+	else if(str_scan(aCmd, "craft%d", &Value1))
 	{
 		int Count = 1;
 		try
@@ -224,6 +221,10 @@ void CVoteMenu::OnMessage(int ClientID, int MsgID, void *pRawMsg, bool InGame)
 
 		RebuildMenu(ClientID);
 	}
+	else if(str_scan(aCmd, "auc_item_%d", &Value1))
+	{
+		AuctionItemInfo(ClientID, Value1);
+	}
 }
 
 void CVoteMenu::OnPlayerLeft(int ClientID)
@@ -293,6 +294,7 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		AddMenuVoteLocalize(ClientID, "null", "ღ Money: %d", pPly->m_AccData.m_Money);
 		AddMenuVoteLocalize(ClientID, "null", "------------ Server");
 		AddMenuChangeVoteLocalize(ClientID, MENU_INFO, "☞ Info");
+		AddMenuChangeVoteLocalize(ClientID, MENU_AUCTION, "☞ Auction");
 		AddMenuVoteLocalize(ClientID, "null", "------------ Account menu");
 		AddMenuChangeVoteLocalize(ClientID, MENU_EQUIP, "☞ Equipment");
 		AddMenuChangeVoteLocalize(ClientID, MENU_INVENTORY, "☞ Inventory");
@@ -301,8 +303,8 @@ void CVoteMenu::RebuildMenu(int ClientID)
 		AddMenuVoteLocalize(ClientID, "null", "------------ Clan menu");
 		if(pPly->m_AccData.m_ClanID != 0)
 		{
-			AddMenuChangeVoteLocalize(ClientID, MENU_CLAN_INFO, "☞ Info");
-			AddMenuChangeVoteLocalize(ClientID, MENU_CLAN_UPGRADE, "☞ Upgrade");
+			AddMenuChangeVoteLocalize(ClientID, MENU_CLAN_INFO, "☞ Clan info");
+			AddMenuChangeVoteLocalize(ClientID, MENU_CLAN_UPGRADE, "☞ Clan upgrade");
 		}
 		else
 			AddMenuVoteLocalize(ClientID, "null", "You not in clan");
@@ -459,20 +461,33 @@ void CVoteMenu::RebuildMenu(int ClientID)
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), CLICK "Spawn in house: %d", pClan->m_SpawnHouse);
+		str_format(aBuf, sizeof(aBuf), "☞ Spawn in house: %d", pClan->m_SpawnHouse);
 		AddMenuVote(ClientID, "cln_upgr_3", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_SPAWN_HOUSE, pClan->m_SpawnHouse));
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_SPAWN_HOUSE, pClan->m_SpawnHouse));
 		AddMenuVote(ClientID, "null", aBuf);
 		AddMenuVote(ClientID, "null", "Spawning in clan houses");
 		AddMenuVote(ClientID, "null", "Available only in top 1 and top 2 clan houses");
 
 		AddMenuVote(ClientID, "null", "");
 
-		str_format(aBuf, sizeof(aBuf), CLICK "Chairs in house: %d", pClan->m_ChairHouse);
+		str_format(aBuf, sizeof(aBuf), "☞ Chairs in house: %d", pClan->m_ChairHouse);
 		AddMenuVote(ClientID, "cln_upgr_4", aBuf);
-		str_format(aBuf, sizeof(aBuf), VALUE "Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_CHAIRS, pClan->m_ChairHouse));
+		str_format(aBuf, sizeof(aBuf), "► Cost: %d", pClanMgr->GetMoneyForUpgrade(CLAN_UPGRADE_CHAIRS, pClan->m_ChairHouse));
 		AddMenuVote(ClientID, "null", aBuf);
 		AddMenuVote(ClientID, "null", "Give additional money and exp from chairs in clan house");
+
+		AddBack(ClientID, MENU_MAIN);
+	}
+	else if(Menu == MENU_AUCTION)
+	{
+		AddMenuVote(ClientID, "null", "------------ Auction");
+
+		for(SAuctionItem &Item : GameServer()->m_AuctionManager.m_vItems)
+		{
+			char aCmd[64];
+			str_format(aCmd, sizeof(aCmd), "auc_item_%d", Item.m_ID);
+			AddMenuVoteLocalize(ClientID, aCmd, "☞ '%s' by %s", MMOCore()->GetItemName(Item.m_ItemID), Item.m_aSellerName);
+		}
 
 		AddBack(ClientID, MENU_MAIN);
 	}
@@ -535,22 +550,18 @@ void CVoteMenu::ItemInfo(int ClientID, int ItemID)
 
 	AddMenuVote(ClientID, "null", "Count = Reason");
 	AddMenuVote(ClientID, "null", "------------ Item menu");
-	str_format(aBuf, sizeof(aBuf), "Item: %s", MMOCore()->GetItemName(ItemID));
-	AddMenuVote(ClientID, "null", aBuf);
-	str_format(aBuf, sizeof(aBuf), "Count: %d", Item.m_Count);
-	AddMenuVote(ClientID, "null", aBuf);
-	str_format(aBuf, sizeof(aBuf), "Rarity: %s", MMOCore()->GetRarityString(Item.m_Rarity));
-	AddMenuVote(ClientID, "null", aBuf);
-	str_format(aBuf, sizeof(aBuf), "Quality: %s", MMOCore()->GetQualityString(Item.m_Quality));
-	AddMenuVote(ClientID, "null", aBuf);
+	AddMenuVoteLocalize(ClientID, "null", "Item: %s", MMOCore()->GetItemName(ItemID));
+	AddMenuVoteLocalize(ClientID, "null", "Count: %d", Item.m_Count);
+	AddMenuVoteLocalize(ClientID, "null", "Rarity: %s", MMOCore()->GetRarityString(Item.m_Rarity));
+	AddMenuVoteLocalize(ClientID, "null", "Quality: %s", MMOCore()->GetQualityString(Item.m_Quality));
 	AddMenuVote(ClientID, "null", "");
 
-	if (ItemType == ITEM_TYPE_USE)
+	if(ItemType == ITEM_TYPE_USE)
 	{
 		str_format(aBuf, sizeof(aBuf), "inv_item_use%d", ItemID);
 		AddMenuVote(ClientID, aBuf, "☞ Use");
 	}
-	else if (ItemType >= ITEM_TYPE_ARMOR_BODY)
+	else if(ItemType >= ITEM_TYPE_ARMOR_BODY)
 	{
 		bool IsEquippedItem = (MMOCore()->GetEquippedItem(ClientID, ItemType) == ItemID);
 
@@ -596,4 +607,23 @@ void CVoteMenu::AddMenuVoteLocalize(int ClientID, const char *pCmd, const char *
 	str_utf8_fix_truncation(aBuf);
 
 	AddMenuVote(ClientID, pCmd, aBuf);
+}
+
+void CVoteMenu::AuctionItemInfo(int ClientID, int ID)
+{
+	ClearVotes(ClientID);
+
+	SAuctionItem Item = GameServer()->m_AuctionManager.GetAuctionItem(ID);
+
+	if(Item.m_ID == -1)
+	{
+		LOG_ERROR(ClientID, "Item already bought?");
+		AddBack(ClientID, MENU_AUCTION);
+	}
+
+	AddMenuVote(ClientID, "null", "------------ Auction item menu");
+	AddMenuVoteLocalize(ClientID, "null", "Item: %s", MMOCore()->GetItemName(Item.m_ItemID));
+	AddMenuVoteLocalize(ClientID, "null", "Count: %d", Item.m_ItemCount);
+
+	AddBack(ClientID, MENU_AUCTION);
 }

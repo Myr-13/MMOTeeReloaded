@@ -8,6 +8,7 @@ struct SAuctionItem
 {
 	int m_ID;
 	int m_ItemID;
+	int m_ItemCount;
 	int m_SellerID;
 	char m_aSellerName[MAX_LOGIN_LENGTH];
 	int m_Cost;
@@ -25,6 +26,8 @@ enum
 
 class CAuctionManager : public CServerComponent
 {
+	void RemoveAuctionItem(int ID);
+
 public:
 	void OnInit() override;
 	void OnShutdown() override;

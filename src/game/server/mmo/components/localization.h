@@ -22,7 +22,8 @@ class CLocalization : public CServerComponent
 	std::map<unsigned int, std::string> m_aLocalizeStrings[NUM_LANGS];
 
 public:
-	virtual void OnInit() override;
+	void OnInit() override;
+	void OnConsoleInit() override;
 
 	const char *Localize(int Lang, const char *pText);
 };

@@ -114,6 +114,7 @@ void IDbConnection::FormatCreateAuction(char *aBuf, unsigned int BufferSize)
 		"CREATE TABLE IF NOT EXISTS auction ("
 		"  id INTEGER NOT NULL PRIMARY KEY, "
 		"  item_id INTEGER NOT NULL, "
+		"  item_count INTEGER NOT NULL, "
 		"  seller_id INTEGER NOT NULL, "
 		"  seller_name VARCHAR(%d) NOT NULL, "  // Some optimization and better code reading :D
 		"  cost INTEGER NOT NULL, "

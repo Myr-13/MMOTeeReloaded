@@ -18,7 +18,7 @@ enum
 	MENU_UPGRADE,
 	MENU_CLAN_INFO,
 	MENU_CLAN_UPGRADE,
-	MENU_MAIL,
+	MENU_AUCTION,
 };
 
 class CVoteMenu : public CServerComponent
@@ -29,6 +29,7 @@ class CVoteMenu : public CServerComponent
 	void ListInventory(int ClientID, int Type);
 	void ItemInfo(int ClientID, int ItemID);
 	void ListCrafts(int ClientID, int Type);
+	void AuctionItemInfo(int ClientID, int ID);
 
 public:
 	CVoteMenu();

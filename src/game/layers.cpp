@@ -26,6 +26,7 @@ CLayers::CLayers()
 	m_pFrontLayer = 0;
 	m_pSwitchLayer = 0;
 	m_pTuneLayer = 0;
+	m_pEntitiesGroup = 0;
 }
 
 void CLayers::Init(class IKernel *pKernel)

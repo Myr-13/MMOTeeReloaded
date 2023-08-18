@@ -25,6 +25,7 @@
 #include "mmo/components/admin_commands.h"
 #include "mmo/components/clan_manager.h"
 #include "mmo/components/localization.h"
+#include "mmo/components/auction_manager.h"
 
 #include "mmo/mmo_core.h"
 
@@ -494,6 +495,7 @@ public:
 	CAdminCommands m_AdminCommands;
 	CClanManager m_ClanManager;
 	CLocalization m_Localization;
+	CAuctionManager m_AuctionManager;
 
 	CMMOCore m_MMOCore;
 

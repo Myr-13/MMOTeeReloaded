@@ -4,6 +4,11 @@
 
 using namespace pugi;
 
+void CLocalization::OnConsoleInit()
+{
+	
+}
+
 void CLocalization::OnInit()
 {
 	for(bool &Elem : m_aTranslated)

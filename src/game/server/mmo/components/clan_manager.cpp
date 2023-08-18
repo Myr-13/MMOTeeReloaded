@@ -501,9 +501,11 @@ void CClanManager::InternalSendClanInvite(int ClanID, int MembersCount, int From
 
 	Msg.m_Timeout = 10;
 	Msg.m_pDescription = "Accept clan invite?";
-	Msg.m_pReason = "";
+	Msg.m_pReason = pClan->m_aClanName;
 
 	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, To);
+
+	GameServer()->SendChatLocalize(From, "Invite sent.");
 }
 
 void CClanManager::ConSaveClans(IConsole::IResult *pResult, void *pUserData)

@@ -1,6 +1,8 @@
 #ifndef GAME_SERVER_MMO_COMPONENT_H
 #define GAME_SERVER_MMO_COMPONENT_H
 
+#include "mmo_errors_macros.h"
+
 class CGameContext;
 
 class CServerComponent
