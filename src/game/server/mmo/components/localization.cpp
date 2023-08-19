@@ -1,12 +1,15 @@
 #include "localization.h"
 
 #include <base/system.h>
+#include <engine/shared/config.h>
+#include <game/server/gamecontext.h>
+#include <game/server/player.h>
 
 using namespace pugi;
 
 void CLocalization::OnConsoleInit()
 {
-	
+	Console()->Register("lang", "s[lang_name]", CFGFLAG_GAME | CFGFLAG_CHAT, ChatLang, this, "Change your localization");
 }
 
 void CLocalization::OnInit()
@@ -65,6 +68,43 @@ void CLocalization::OnInit()
 
 		dbg_msg("localization", "loaded %s. Lang ID: %d", LangPath.c_str(), ID);
 	}
+}
+
+void CLocalization::ChatLang(IConsole::IResult *pResult, void *pUserData)
+{
+	CLocalization *pSelf = (CLocalization *)pUserData;
+	const char *pLang = pResult->GetString(0);
+
+	int ClientID = pResult->m_ClientID;
+	if(ClientID < 0 || ClientID >= MAX_PLAYERS)
+		return;
+	CPlayer *pPly = pSelf->GameServer()->m_apPlayers[ClientID];
+	if(!pPly || !pPly->m_LoggedIn)
+		return;
+
+	for(auto &Entry : pSelf->m_aLangIDs)
+	{
+		if(!str_comp(Entry.first, pLang))
+		{
+			pPly->m_AccData.m_Lang = Entry.second;
+
+			pSelf->GameServer()->SendChatLocalize(ClientID, "Localization changed.");
+			return;
+		}
+	}
+
+	char aBuf[128];
+	mem_zero(aBuf, sizeof(aBuf));
+
+	for(auto &Entry : pSelf->m_aLangIDs)
+	{
+		str_append(aBuf, Entry.first, sizeof(aBuf));
+		str_append(aBuf, ", ", sizeof(aBuf));
+	}
+
+	aBuf[str_length(aBuf) - 1] = '\0';
+
+	pSelf->GameServer()->SendChatLocalize(ClientID, "Wrong lang_name. Supported languages: %s", aBuf);
 }
 
 const char *CLocalization::Localize(int Lang, const char *pText)
