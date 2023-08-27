@@ -434,7 +434,7 @@ int CClanManager::GetMoneyForUpgrade(int UpgradeID, int UpgradeCount)
 	case CLAN_UPGRADE_CHAIRS: return 1500 * UpgradeCount;
 	}
 
-	return INT_MAX;
+	return 0x7FFFFFFF;
 }
 
 void CClanManager::SendClanInvite(int From, int ClientID)
