@@ -11,6 +11,14 @@ struct SShopEntry
 	int m_Level;
 };
 
+struct SBotLootData
+{
+	int m_ID;
+	int m_MinCount;
+	int m_MaxCount;
+	int m_Chance;
+};
+
 struct SBotData
 {
 	int m_ID;
@@ -22,6 +30,8 @@ struct SBotData
 	int m_Armor;
 	int m_Damage;
 	int m_AIType;
+
+	std::vector<SBotLootData> m_vLoot;
 };
 
 struct SArmorData

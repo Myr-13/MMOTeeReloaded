@@ -80,6 +80,7 @@ void CMMOCore::InitMobs()
 		xml_node TeeInfo = Node.child("TeeInfo");
 		xml_node Stats = Node.child("Stats");
 		xml_node Spawn = Node.child("Spawn");
+		xml_node Loot = Node.child("Loot");
 
 		SBotData Data;
 		Data.m_ID = Node.attribute("ID").as_int();
@@ -94,6 +95,17 @@ void CMMOCore::InitMobs()
 		Data.m_Armor = Stats.attribute("Armor").as_int();
 		Data.m_Damage = Stats.attribute("Damage").as_int();
 		str_copy(Data.m_aSpawnPointName, Spawn.empty() ? "" : Spawn.attribute("SpawnPoint").as_string());
+
+		for(xml_node Node2 : Loot)
+		{
+			SBotLootData LootData;
+			LootData.m_ID = Node2.attribute("ID").as_int();
+			LootData.m_MinCount = Node2.attribute("MinCount").as_int();
+			LootData.m_MaxCount = Node2.attribute("MaxCount").as_int();
+			LootData.m_Chance = Node2.attribute("Chance").as_int();
+
+			Data.m_vLoot.push_back(LootData);
+		}
 
 		m_vBotsData.push_back(Data);
 	}
@@ -228,6 +240,8 @@ void CMMOCore::CreateDummy(vec2 Pos, SBotData Data)
 	pNewDummy->m_MaxArmor = Data.m_Armor;
 	pNewDummy->m_Damage = Data.m_Damage;
 	pNewDummy->FormatLevelName();
+
+	pNewDummy->m_vLoot = Data.m_vLoot;
 
 	// Respawn bot with new stats
 	pNewDummy->Spawn();

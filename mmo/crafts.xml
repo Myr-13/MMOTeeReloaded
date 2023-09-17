@@ -6,6 +6,7 @@
     <!-- 2 - Weapon -->
     <!-- 3 - Armor -->
     <!-- 4 - Artifact -->
+    <!-- 5 - Pets -->
 
     <!-- Resources -->
     <!-- Mithril ingot -->
@@ -210,5 +211,13 @@
         <Ingredient ID="42" Count="1"/> <!-- Grenade -->
         <Ingredient ID="15" Count="150"/> <!-- Obsidian -->
         <Ingredient ID="5" Count="3"/> <!-- Fire shard -->
+    </Craft>
+
+    <!-- Pets -->
+    <!-- Mithril golem -->
+    <Craft Type="5" ResultID="91">
+        <Ingredient ID="15" Count="400"/> <!-- Obsidian -->
+        <Ingredient ID="35" Count="65"/> <!-- Mithril ingot -->
+        <Ingredient ID="13" Count="600"/> <!-- Gold ore -->
     </Craft>
 </Crafts>

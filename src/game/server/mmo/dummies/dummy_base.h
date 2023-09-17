@@ -4,11 +4,13 @@
 #include <game/server/entity.h>
 #include <game/gamecore.h>
 #include <game/server/teeinfo.h>
+#include <game/server/mmo/mmo_core_structs.h>
 
 enum
 {
 	DUMMY_TYPE_STAND,
 	DUMMY_TYPE_SLIME,
+	DUMMY_TYPE_LIVING_FIRE = 8,
 	DUMMY_TYPE_PET
 };
 
@@ -43,6 +45,7 @@ public:
 	int m_Health;
 	int m_Armor;
 	bool m_NoDamage;
+	std::vector<SBotLootData> m_vLoot;
 
 private:
 	int m_DummyType;

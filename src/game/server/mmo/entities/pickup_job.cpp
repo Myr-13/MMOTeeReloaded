@@ -102,11 +102,15 @@ void CPickupJob::Damage(int ClientID)
 		}
 		else if(m_Type == PICKUP_JOB_TYPE_WOOD)
 		{
-			MMOCore()->GiveItem(ClientID, ITEM_WOOD, 1 + rand() % 3);
+			MMOCore()->GiveItem(ClientID, ITEM_WOOD, ((MMOCore()->GetEquippedItem(ClientID, ITEM_TYPE_PET) == ITEM_PET_MONKEY) ? 3 : 1) + rand() % 3);
+
+			if(rand() % 500 == 0)
+				MMOCore()->GiveItem(ClientID, ITEM_PET_MONKEY, 1);
 		}
 		else if(m_Type == PICKUP_JOB_TYPE_MATERIAL)
 		{
-			if (!MMOCore()->GiveItem(ClientID, ITEM_MATERIAL, 25 + pPly->m_AccWorks.m_aWorks[WorkID].m_Level * 3)) {
+			if (!MMOCore()->GiveItem(ClientID, ITEM_MATERIAL, 25 + pPly->m_AccWorks.m_aWorks[WorkID].m_Level * 3))
+			{
 				GameServer()->SendChatLocalize(ClientID, "You have reached the maximum amount of materials. Go sell them in a shop!");
 				return;
 			}

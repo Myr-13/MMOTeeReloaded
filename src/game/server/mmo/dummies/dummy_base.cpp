@@ -46,10 +46,10 @@ CDummyBase::CDummyBase(CGameWorld *pWorld, vec2 Pos, int DummyType, int DummyAIT
 	case DUMMY_AI_TYPE_PET: m_pDummyController = new CPet(); break;
 	default:
 		m_pDummyController = 0x0;
-		dbg_msg("dummy", "invalid dummy ai type: %d", m_DummyType);
+		dbg_msg("dummy", "invalid dummy ai type: %d", m_DummyAIType);
 	}
 
-	if (m_pDummyController)
+	if(m_pDummyController)
 	{
 		m_pDummyController->m_pDummyBase = this;
 		m_pDummyController->Init();
@@ -91,7 +91,7 @@ void CDummyBase::Die(int Killer)
 	m_Alive = false;
 	m_SpawnTick = Server()->Tick() + Server()->TickSpeed();
 
-	if (Killer >= 0 && rand() % 2 == 0)
+	if(Killer >= 0 && rand() % 2 == 0)
 	{
 		int Level = 1;
 
@@ -108,6 +108,26 @@ void CDummyBase::Die(int Killer)
 			m_Core.m_Vel + vec2(RandomForce, RandomForce),
 			(rand() % 2 == 0) ? PICKUP_PHYS_TYPE_XP : PICKUP_PHYS_TYPE_MONEY,
 			Count);
+	}
+
+	if(Killer >= 0)
+	{
+		for(auto &Loot : m_vLoot)
+		{
+			if(rand() % Loot.m_Chance != 0)
+				continue;
+
+			int Count = Loot.m_MinCount + rand() % std::max(Loot.m_MaxCount - Loot.m_MinCount, 1);
+
+			int RandomForce = 3 - rand() % 7;
+			new CPickupPhys(
+				GameWorld(),
+				m_Pos,
+				m_Core.m_Vel + vec2(RandomForce, RandomForce),
+				PICKUP_PHYS_TYPE_ITEM,
+				Count,
+				Loot.m_ID);
+		}
 	}
 
 	GameServer()->CreateDeath(m_Pos, 0);

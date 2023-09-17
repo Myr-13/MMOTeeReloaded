@@ -25,7 +25,7 @@ void CMoneyBag::Tick()
 	if(pChr)
 	{
 		int Count = rand() % 5 + 1;
-		int Bonus = fmin((Server()->Tick() - m_RespawnTick) / (60 * 60), 30);
+		int Bonus = std::min((Server()->Tick() - m_RespawnTick) / (60 * 60), 30);
 		int ClientID = pChr->GetPlayer()->GetCID();
 
 		GameServer()->SendChatLocalize(-1, "%s found Secret Bag! Got %d + Time %d Money Bag!", Server()->ClientName(ClientID), Count, Bonus);

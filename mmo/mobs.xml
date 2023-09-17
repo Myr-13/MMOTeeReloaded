@@ -14,45 +14,48 @@
         <TeeInfo Name="Slime" Skin="ghost" UseCustomColors="1" ColorBody="5504798" ColorFeet="5504798"/>
         <Stats Level="1" HP="10" Armor="0" Damage="0"/>
         <Spawn SpawnPoint="Slime"/>
+        <Loot>
+            <Item ID="86" MinCount="1" MaxCount="1" Chance="500"/> <!-- Mini slime -->
+        </Loot>
     </Mob>
     <!-- Zombie -->
-    <Mob ID="1" AIType="1">
+    <Mob ID="2" AIType="1">
         <TeeInfo Name="Zombie" Skin="cammo" UseCustomColors="1" ColorBody="5406464" ColorFeet="5406464"/>
         <Stats Level="30" HP="60" Armor="0" Damage="10"/>
         <Spawn SpawnPoint="Zombie"/>
     </Mob>
     <!-- Skeleton -->
-    <Mob ID="1" AIType="1">
+    <Mob ID="3" AIType="1">
         <TeeInfo Name="Skeleton" Skin="cammostripes" UseCustomColors="1" ColorBody="255" ColorFeet="255"/>
         <Stats Level="100" HP="200" Armor="40" Damage="20"/>
         <Spawn SpawnPoint="Skeleton"/>
     </Mob>
     <!-- Goblin -->
-    <Mob ID="1" AIType="1">
+    <Mob ID="4" AIType="1">
         <TeeInfo Name="Goblin" Skin="pinky" UseCustomColors="1" ColorBody="5677091" ColorFeet="5677091"/>
         <Stats Level="175" HP="350" Armor="70" Damage="35"/>
         <Spawn SpawnPoint="Goblin"/>
     </Mob>
     <!-- Hohol -->
-    <Mob ID="1" AIType="1">
+    <Mob ID="5" AIType="1">
         <TeeInfo Name="Hohol" Skin="pinky" UseCustomColors="0" ColorBody="0" ColorFeet="0"/>
         <Stats Level="250" HP="450" Armor="130" Damage="70"/>
         <Spawn SpawnPoint="Hohol"/>
     </Mob>
     <!-- Vortex elemental -->
-    <Mob ID="1" AIType="3">
+    <Mob ID="6" AIType="3">
         <TeeInfo Name="VortexElemental" Skin="cammo" UseCustomColors="1" ColorBody="8584960" ColorFeet="10878720"/>
         <Stats Level="300" HP="650" Armor="330" Damage="100"/>
         <Spawn SpawnPoint="Vortex"/>
     </Mob>
     <!-- Spider -->
-    <Mob ID="1" AIType="4">
+    <Mob ID="7" AIType="4">
         <TeeInfo Name="Spider" Skin="spider" UseCustomColors="0" ColorBody="0" ColorFeet="0"/>
         <Stats Level="400" HP="900" Armor="600" Damage="120"/>
         <Spawn SpawnPoint="Spider"/>
     </Mob>
     <!-- Living fire -->
-    <Mob ID="1" AIType="1">
+    <Mob ID="8" AIType="1">
         <TeeInfo Name="Living fire" Skin="bluestripe" UseCustomColors="1" ColorBody="1048320" ColorFeet="65280"/>
         <Stats Level="500" HP="1150" Armor="850" Damage="150"/>
         <Spawn SpawnPoint="Fire"/>
