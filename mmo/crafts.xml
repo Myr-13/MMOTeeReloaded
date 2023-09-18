@@ -220,4 +220,19 @@
         <Ingredient ID="35" Count="65"/> <!-- Mithril ingot -->
         <Ingredient ID="13" Count="600"/> <!-- Gold ore -->
     </Craft>
+
+    <!-- Phoenix -->
+    <Craft Type="5" ResultID="92">
+        <Ingredient ID="5" Count="80"/> <!-- Fire shard -->
+        <Ingredient ID="35" Count="60"/> <!-- Mithril ingot -->
+        <Ingredient ID="4" Count="30"/> <!-- Vortex shard -->
+    </Craft>
+
+    <!-- Dragon -->
+    <Craft Type="5" ResultID="93">
+        <Ingredient ID="5" Count="100"/> <!-- Fire shard -->
+        <Ingredient ID="37" Count="50"/> <!-- Adamantite ingot -->
+        <Ingredient ID="15" Count="500"/> <!-- Obsidian -->
+        <Ingredient ID="4" Count="50"/> <!-- Vortex shard -->
+    </Craft>
 </Crafts>

@@ -118,7 +118,7 @@
     <Item ID="86" Type="8" Rarity="0" Name="Mini slime"/>
     <Item ID="87" Type="8" Rarity="4" Name="Igor"/>
     <Item ID="88" Type="8" Rarity="1" Name="Dolphin"/>
-    <Item ID="89" Type="8" Rarity="1" Name="Monkey"/>
+    <Item ID="89" Type="8" Rarity="0" Name="Monkey"/>
     <Item ID="90" Type="8" Rarity="1" Name="Tiger"/>
     <Item ID="91" Type="8" Rarity="2" Name="Mithril golem"/>
     <Item ID="92" Type="8" Rarity="2" Name="Phoenix"/>
