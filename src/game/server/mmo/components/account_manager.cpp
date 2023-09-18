@@ -91,7 +91,7 @@ bool CAccountManager::LoginThread(IDbConnection *pSqlServer, const ISqlData *pGa
 
 	char aBuf[1024];
 
-	str_copy(aBuf, "SELECT id, level, exp, money, donate, clan_id, language FROM users WHERE name = ? AND password = ?");
+	str_copy(aBuf, "SELECT id, level, exp, money, donate, clan_id, language, blocked FROM users WHERE name = ? AND password = ?");
 	if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		return true;
 	pSqlServer->BindString(1, pData->m_aLogin);
@@ -100,9 +100,15 @@ bool CAccountManager::LoginThread(IDbConnection *pSqlServer, const ISqlData *pGa
 	bool End;
 	if(pSqlServer->Step(&End, pError, ErrorSize))
 		return true;
-	if (End)
+	if(End)
 	{
 		str_copy(pResult->m_aMessage, "User with given username and password is not registered.");
+		return false;
+	}
+
+	if(pSqlServer->GetInt(8))
+	{
+		str_copy(pResult->m_aMessage, "This account is frozen.");
 		return false;
 	}
 
